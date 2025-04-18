@@ -5,7 +5,7 @@ provider "aws" {
 module "iam" {
   source        = "../../modules/iam"
   role_name     = "goatfarm-lambda-role-dev"
-  force_create  = false
+  force_create  = true
   tags = {
     Project     = "goatfarm"
     Environment = "dev"
@@ -44,7 +44,7 @@ module "api_gateway" {
 module "goatfarm_data_bucket" {
   source        = "../../modules/s3-backend"
   bucket_name   = "goatfarm-data-dev-backend"
-  force_create  = false  # <-- Do not recreate
+  force_create  = true 
   tags = {
     Project     = "goatfarm"
     Environment = "dev"
