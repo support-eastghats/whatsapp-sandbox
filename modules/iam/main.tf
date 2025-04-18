@@ -47,7 +47,3 @@ resource "aws_iam_role_policy" "lambda_policy" {
     ]
   })
 }
-
-output "lambda_exec_role_arn" {
-  value = var.force_create ? aws_iam_role.lambda_exec_role[0].arn : data.aws_iam_role.existing[0].arn
-}
