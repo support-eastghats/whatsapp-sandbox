@@ -8,7 +8,7 @@ resource "aws_lambda_function" "lambda_func" {
   runtime          = "nodejs18.x"
   source_code_hash = filebase64sha256(var.lambda_zip_path)
   role             = var.lambda_role_arn
-  timeout          = 60
+  timeout          = 600
 
   environment {
     variables = var.env_vars
