@@ -1,3 +1,12 @@
+variable "region" {
+  type        = string
+  default     = "ap-south-1"
+}
+
+variable "api_gateway_id" {
+  description = "API Gateway ID used to trigger the Lambda"
+  type        = string
+}
 
 variable "function_name" {
   type = string

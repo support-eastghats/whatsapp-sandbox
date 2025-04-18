@@ -1,4 +1,6 @@
 
+data "aws_caller_identity" "current" {}
+
 resource "aws_lambda_function" "lambda_func" {
   function_name    = var.function_name
   filename         = var.lambda_zip_path
@@ -6,7 +8,7 @@ resource "aws_lambda_function" "lambda_func" {
   runtime          = "nodejs18.x"
   source_code_hash = filebase64sha256(var.lambda_zip_path)
   role             = var.lambda_role_arn
-  timeout          = 15
+  timeout          = 60
 
   environment {
     variables = var.env_vars
@@ -18,4 +20,15 @@ resource "aws_lambda_function" "lambda_func" {
 resource "aws_cloudwatch_log_group" "log_group" {
   name              = "/aws/lambda/${aws_lambda_function.lambda_func.function_name}"
   retention_in_days = 14
+}
+
+
+resource "aws_lambda_permission" "api_gateway" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_func.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  # This must match your actual API Gateway ID and region
+  source_arn = "arn:aws:execute-api:${var.region}:${data.aws_caller_identity.current.account_id}:${var.api_gateway_id}/*/*"
 }

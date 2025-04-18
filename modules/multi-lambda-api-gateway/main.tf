@@ -2,8 +2,19 @@
 resource "aws_apigatewayv2_api" "http_api" {
   name          = var.name
   protocol_type = "HTTP"
-  tags          = var.tags
+
+  cors_configuration {
+    allow_headers     = var.cors.allow_headers
+    allow_methods     = var.cors.allow_methods
+    allow_origins     = var.cors.allow_origins
+    allow_credentials = var.cors.allow_credentials
+    expose_headers    = var.cors.expose_headers
+    max_age           = var.cors.max_age
+  }
+
+  tags = var.tags
 }
+
 
 resource "aws_apigatewayv2_stage" "default" {
   api_id      = aws_apigatewayv2_api.http_api.id
