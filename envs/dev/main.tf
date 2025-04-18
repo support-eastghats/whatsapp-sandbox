@@ -19,7 +19,10 @@ module "lambda_test" {
   handler          = "index.handler"
   lambda_zip_path  = "../../lambda-code/lambda_test.zip"
   lambda_role_arn  = module.iam.lambda_exec_role_arn
-  env_vars         = { STAGE = "dev" }
+  env_vars = {
+    STAGE = "dev"
+    BUCKET = module.goatfarm_data_bucket.bucket_name
+  }
   tags             = { Project = "goatfarm", Environment = "dev" }
 }
 
