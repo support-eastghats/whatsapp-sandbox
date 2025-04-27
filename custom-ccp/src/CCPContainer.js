@@ -1,35 +1,31 @@
 import { useEffect } from "react";
+import 'amazon-connect-streams'; // ✅ This loads `window.connect`
 
-export default function CCPContainer({ onAgentReady, onCcpError }) {
+export default function CCPContainer({ onAgentReady }) {
   useEffect(() => {
     const ccpUrl = process.env.REACT_APP_CCP_URL;
     const region = process.env.REACT_APP_REGION;
 
-    console.log("🟡 CCP Init Attempt", ccpUrl, region);
+    console.log("🟡 CCP Init Attempt");
+    console.log("🔗 CCP URL:", ccpUrl);
+    console.log("🌍 Region:", region);
 
     if (!window.connect || !window.connect.core) {
-      const msg = "Amazon Connect SDK not loaded";
-      console.error("❌", msg);
-      onCcpError?.(msg);
+      console.error("❌ Amazon Connect SDK not loaded (npm import failed)");
       return;
     }
 
     const container = document.getElementById("ccp-container");
     if (!container) {
-      const msg = "CCP container not found in DOM";
-      console.error("❌", msg);
-      onCcpError?.(msg);
+      console.error("❌ CCP container element not found in DOM");
       return;
     }
 
     window.connect.core.initCCP(container, {
-      ccpUrl,
-      region,
-      loginPopup: true,
+      ccpUrl: ccpUrl,
+      region: region,
+      loginPopup: true, // for Google SSO
       loginPopupAutoClose: true,
-      softphone: {
-        allowFramedSoftphone: true,
-      }
     });
 
     window.connect.agent((agent) => {
@@ -42,7 +38,7 @@ export default function CCPContainer({ onAgentReady, onCcpError }) {
       };
       onAgentReady(info);
     });
-  }, [onAgentReady, onCcpError]);
+  }, [onAgentReady]);
 
   return <div id="ccp-container" style={{ height: "500px", width: "100%" }} />;
 }
