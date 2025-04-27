@@ -55,4 +55,3 @@ resource "aws_amplify_domain_association" "domain" {
 
   depends_on = [aws_amplify_branch.main_branch]
 }
-
