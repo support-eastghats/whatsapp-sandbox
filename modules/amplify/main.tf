@@ -34,4 +34,7 @@ resource "aws_amplify_domain_association" "domain" {
     branch_name = var.branch_name
     prefix      = var.domain_prefix
   }
+
+  depends_on = [aws_amplify_branch.main_branch]  # ✅ Ensure branch is created first
 }
+

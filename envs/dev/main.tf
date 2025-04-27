@@ -80,7 +80,7 @@ module "amplify_app" {
   github_token   = var.github_token
   branch_name    = "dev"
   stage          = "DEVELOPMENT"
-  domain_name    = "dev.weconnect.scheduler.easysmartcleaners.com"
+  domain_name    = "dev.ccp.eastghats.com"
   domain_prefix  = ""
 
   environment_variables = {
