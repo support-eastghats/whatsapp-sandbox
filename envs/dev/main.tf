@@ -89,8 +89,6 @@ module "amplify_app" {
     REACT_APP_API_BASE_URL   = module.api_gateway.api_url
   }
 
-  build_spec_path = "${path.root}/buildspec.yml"
-
   tags = {
     Project = "CustomCCP"
     Env     = "dev"

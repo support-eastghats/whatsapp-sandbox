@@ -43,12 +43,6 @@ variable "domain_prefix" {
   description = "Prefix for subdomain (e.g., dev)"
 }
 
-variable "build_spec_path" {
-  type        = string
-  default     = null
-  description = "Optional path to buildspec.yml file"
-}
-
 variable "tags" {
   type        = map(string)
   default     = {}

@@ -1,12 +1,30 @@
 resource "aws_amplify_app" "this" {
-  name         = var.app_name
-  repository   = var.repo_url
-  platform     = "WEB"
-  oauth_token  = var.github_token
+  name        = var.app_name
+  repository  = var.repo_url
+  platform    = "WEB"
+  oauth_token = var.github_token
 
   environment_variables = var.environment_variables
 
-  build_spec = var.build_spec_path != null ? file(var.build_spec_path) : null
+  build_spec = <<EOT
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - cd custom-ccp
+        - npm ci
+    build:
+      commands:
+        - npm run build
+  artifacts:
+    baseDirectory: custom-ccp/build
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - custom-ccp/node_modules/**/*
+EOT
 
   custom_rule {
     source = "/<*>"
@@ -35,6 +53,6 @@ resource "aws_amplify_domain_association" "domain" {
     prefix      = var.domain_prefix
   }
 
-  depends_on = [aws_amplify_branch.main_branch]  # ✅ Ensure branch is created first
+  depends_on = [aws_amplify_branch.main_branch]
 }
 
