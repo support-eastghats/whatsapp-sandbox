@@ -1,53 +1,99 @@
 provider "aws" {
-  region = "ap-south-1"
+  region = "eu-west-2"
+}
+
+
+data "aws_connect_instance" "default" {
+  instance_alias = "eastghats-dev"
+}
+
+locals {
+  connect_ccp_url = "https://${data.aws_connect_instance.default.instance_alias}.awsapps.com/connect/ccp"
+}
+
+variable "github_token" {
+  description = "GitHub Token for Amplify app"
+  type        = string
+  sensitive   = true
+  default     = "" # avoid errors in CLI; overridden in GitHub Actions
 }
 
 module "iam" {
   source        = "../../modules/iam"
-  role_name     = "goatfarm-lambda-role-dev"
+  role_name     = "eastghats-ccp-lambda-role-dev"
   force_create  = true
   tags = {
-    Project     = "goatfarm"
+    Project     = "eastghats-ccp"
     Environment = "dev"
   }
 }
 
-
-module "lambda_test" {
+module "get_profiles_ccp" {
   source           = "../../modules/lambda"
-  function_name    = "lambdadevtest"
+  function_name    = "getRoutingProfiles"
   handler          = "index.handler"
-  lambda_zip_path  = "../../lambda-code/lambda_test.zip"
+  lambda_zip_path  = "../../lambda-code/getRoutingProfiles.zip"
   lambda_role_arn  = module.iam.lambda_exec_role_arn
   api_gateway_id   = module.api_gateway.api_id
   env_vars = {
     STAGE = "dev"
-    BUCKET = module.goatfarm_data_bucket.bucket_name
+    CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id
   }
-  tags             = { Project = "goatfarm", Environment = "dev" }
+  tags             = { Project = "eastghats-ccp", Environment = "dev" }
+}
+
+
+module "update_profiles_ccp" {
+  source           = "../../modules/lambda"
+  function_name    = "updateRoutingProfiles"
+  handler          = "index.handler"
+  lambda_zip_path  = "../../lambda-code/updateRoutingProfiles.zip"
+  lambda_role_arn  = module.iam.lambda_exec_role_arn
+  api_gateway_id   = module.api_gateway.api_id
+  env_vars = {
+    STAGE = "dev"
+    CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id
+  }
+  tags             = { Project = "eastghats-ccp", Environment = "dev" }
 }
 
 
 module "api_gateway" {
   source = "../../modules/multi-lambda-api-gateway"
-  name   = "goatfarm-api-dev"
+  name   = "eastghats-ccp-api-dev"
   routes = {
-    "/test"        = { method = "POST", lambda_uri = module.lambda_test.lambda_uri },
+    "/getRoutingProfiles"  = { method = "POST", lambda_uri = module.get_profiles_ccp.lambda_uri },
+    "/updateRoutingProfiles"  = { method = "POST", lambda_uri = module.update_profiles_ccp.lambda_uri },
   }
 
   tags = {
-    Project     = "goatfarm"
+    Project     = "eastghats-ccp"
     Environment = "dev"
   }
 }
 
 
-module "goatfarm_data_bucket" {
-  source        = "../../modules/s3-backend"
-  bucket_name   = "goatfarm-data-dev-backend"
-  force_create  = true 
+module "amplify_app" {
+  source         = "../../modules/amplify"
+  app_name       = "custom-ccp"
+  repo_url       = "https://github.com/support-eastghats/customccp.git"
+  github_token   = var.github_token
+  branch_name    = "dev"
+  stage          = "DEVELOPMENT"
+  domain_name    = "dev.weconnect.scheduler.easysmartcleaners.com"
+  domain_prefix  = ""
+
+  environment_variables = {
+    REACT_APP_REGION    = "eu-west-2"
+    REACT_APP_CCP_URL   = local.connect_ccp_url
+    REACT_APP_API_BASE_URL   = module.api_gateway.api_url
+  }
+
+  build_spec_path = "${path.module}/buildspec.yml"
+
   tags = {
-    Project     = "goatfarm"
-    Environment = "dev"
+    Project = "CustomCCP"
+    Env     = "dev"
   }
 }
+
