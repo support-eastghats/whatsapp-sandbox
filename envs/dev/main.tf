@@ -84,7 +84,7 @@ module "amplify_app" {
   domain_prefix  = ""
 
   environment_variables = {
-    REACT_APP_REGION    = "eu-west-2"
+    REACT_APP_REGION         = "eu-west-2"
     REACT_APP_CCP_URL        = "https://eastghats-dev.awsapps.com/connect/ccp"
     REACT_APP_API_BASE_URL   = module.api_gateway.api_url
   }

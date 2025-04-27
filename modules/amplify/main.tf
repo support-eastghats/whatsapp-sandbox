@@ -6,25 +6,25 @@ resource "aws_amplify_app" "this" {
 
   environment_variables = var.environment_variables
 
-  build_spec = <<EOT
+ build_spec = <<EOT
 version: 1
 frontend:
   phases:
     preBuild:
       commands:
-        - cd custom-ccp
         - npm ci
     build:
       commands:
         - npm run build
   artifacts:
-    baseDirectory: custom-ccp/build
+    baseDirectory: build
     files:
       - '**/*'
   cache:
     paths:
-      - custom-ccp/node_modules/**/*
+      - node_modules/**/*
 EOT
+
 
   custom_rule {
     source = "/<*>"
