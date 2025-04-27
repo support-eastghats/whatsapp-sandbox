@@ -12,17 +12,18 @@ frontend:
   phases:
     preBuild:
       commands:
+        - cd custom-ccp
         - npm ci
     build:
       commands:
         - npm run build
   artifacts:
-    baseDirectory: build
+    baseDirectory: custom-ccp/build
     files:
       - '**/*'
   cache:
     paths:
-      - node_modules/**/*
+      - custom-ccp/node_modules/**/*
 EOT
 
   custom_rule {
