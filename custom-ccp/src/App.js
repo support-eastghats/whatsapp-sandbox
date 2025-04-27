@@ -5,17 +5,28 @@ import ProfileSwitcher from "./components/ProfileSwitcher";
 function App() {
   const [agentInfo, setAgentInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [ccpStatus, setCcpStatus] = useState("🔄 Initializing CCP...");
 
   const handleAgentReady = (info) => {
     setAgentInfo(info);
     setIsLoading(false);
+    setCcpStatus("✅ CCP Loaded");
+  };
+
+  const handleCcpError = (message) => {
+    setCcpStatus(`❌ CCP Error: ${message}`);
   };
 
   return (
     <div style={{ fontFamily: "Arial, sans-serif", padding: "1rem" }}>
       <h2>Custom CCP with Routing Profile Switcher</h2>
 
-      {/* Show loading spinner while agent info is loading */}
+      {/* Status message */}
+      <div style={{ margin: "1rem 0", fontWeight: "bold", color: ccpStatus.startsWith("❌") ? "red" : "green" }}>
+        {ccpStatus}
+      </div>
+
+      {/* Loading Spinner */}
       {isLoading && (
         <div style={{ margin: "1rem 0", fontSize: "16px" }}>
           <span>Loading agent session...</span>
@@ -23,7 +34,7 @@ function App() {
         </div>
       )}
 
-      {/* Show agent welcome banner */}
+      {/* Agent Greeting */}
       {!isLoading && agentInfo && (
         <div style={{
           padding: "0.75rem 1rem",
@@ -36,11 +47,11 @@ function App() {
         </div>
       )}
 
-      {/* Profile switcher when agent is ready */}
+      {/* Profile Switcher */}
       {agentInfo && <ProfileSwitcher userId={agentInfo.userId} />}
 
-      {/* Always load CCP */}
-      <CCPContainer onAgentReady={handleAgentReady} />
+      {/* CCP Component */}
+      <CCPContainer onAgentReady={handleAgentReady} onCcpError={handleCcpError} />
     </div>
   );
 }
