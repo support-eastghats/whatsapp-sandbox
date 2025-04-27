@@ -8,7 +8,7 @@ resource "aws_amplify_app" "this" {
 
   build_spec = var.build_spec_path != null ? file(var.build_spec_path) : null
 
-  custom_rules {
+  custom_rule {
     source = "/<*>"
     target = "/index.html"
     status = "200"
