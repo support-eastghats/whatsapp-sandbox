@@ -9,8 +9,9 @@ variable "repo_url" {
 }
 
 variable "github_token" {
-  description = "GitHub personal access token"
+  description = "GitHub token for Amplify integration"
   type        = string
+  sensitive   = true
 }
 
 variable "branch_name" {
