@@ -6,12 +6,7 @@ frontend:
         - npm ci
     build:
       commands:
-        - echo "Building with CCP URL = $REACT_APP_CCP_URL"
         - npm run build
-        - echo "Listing build/"
-        - ls -la build/
-        - echo "Listing build/static/"
-        - ls -la build/static/
   artifacts:
     baseDirectory: build
     files:
