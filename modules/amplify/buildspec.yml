@@ -7,7 +7,7 @@ frontend:
         - npm ci
     build:
       commands:
-        - echo "✅ Building with CCP URL: $REACT_APP_CCP_URL"
+        - echo "🔧 Building with CCP URL = $REACT_APP_CCP_URL"
         - npm run build
   artifacts:
     baseDirectory: build
