@@ -6,25 +6,7 @@ resource "aws_amplify_app" "this" {
 
   environment_variables = var.environment_variables
 
- build_spec = <<EOT
-version: 1
-frontend:
-  phases:
-    preBuild:
-      commands:
-        - npm ci
-    build:
-      commands:
-        - npm run build
-  artifacts:
-    baseDirectory: build
-    files:
-      - '**/*'
-  cache:
-    paths:
-      - node_modules/**/*
-EOT
-
+  build_spec = file("${path.module}/buildspec.yml")
 
   custom_rule {
     source = "/<*>"
