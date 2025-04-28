@@ -1,55 +1,46 @@
 import { useEffect } from "react";
-import 'amazon-connect-streams';
 
-export default function CCPContainer({ onAgentReady, onCcpError }) {
+export default function CCPContainer({ onError }) {
   useEffect(() => {
-    const ccpUrl = process.env.REACT_APP_CCP_URL;
-    const region = process.env.REACT_APP_REGION;
+    const interval = setInterval(() => {
+      const container = document.getElementById("ccpContainer");
 
-    console.log("🟡 CCP Init Attempt");
-    console.log("🔗 CCP URL:", ccpUrl);
-    console.log("🌍 Region:", region);
-
-    setTimeout(() => {
-      try {
-        if (!window.connect || !window.connect.core) {
-          const errMsg = "❌ Amazon Connect SDK not loaded (npm import failed)";
-          console.error(errMsg);
-          onCcpError?.(errMsg);
-          return;
-        }
-
-        const container = document.getElementById("ccp-container");
-        if (!container) {
-          const errMsg = "❌ CCP container element not found in DOM";
-          console.error(errMsg);
-          onCcpError?.(errMsg);
-          return;
-        }
-
+      // Wait for SDK and DOM to be ready
+      if (window.connect && container) {
+        console.log("✅ connect.embedCCP starting...");
         window.connect.core.initCCP(container, {
-          ccpUrl,
-          region,
+          ccpUrl: process.env.REACT_APP_CCP_URL,
+          region: process.env.REACT_APP_REGION,
           loginPopup: true,
           loginPopupAutoClose: true,
+          softphone: {
+            allowFramedSoftphone: true,
+          },
         });
-
-        window.connect.agent((agent) => {
-          console.log("✅ Agent connected");
-          const info = {
-            name: agent.getName(),
-            username: agent.getUsername(),
-            routingProfile: agent.getRoutingProfile().name,
-            userId: agent.getConfiguration().agentId,
-          };
-          onAgentReady(info);
-        });
-      } catch (error) {
-        console.error("❌ CCP init failed:", error);
-        onCcpError?.(error.message || "Unknown CCP error");
+        clearInterval(interval);
       }
-    }, 500);
-  }, [onAgentReady, onCcpError]);
+    }, 300); // retry every 300ms
 
-  return <div id="ccp-container" style={{ height: "500px", width: "100%" }} />;
+    // Timeout fail-safe after 10 seconds
+    setTimeout(() => clearInterval(interval), 10000);
+
+    return () => clearInterval(interval); // cleanup
+  }, []);
+
+  return (
+    <div>
+      <h2 style={{ fontFamily: "Arial", marginBottom: "10px" }}>
+        Amazon Connect CCP
+      </h2>
+      <div
+        id="ccpContainer"
+        style={{
+          width: "100%",
+          height: "500px",
+          border: "1px solid #ccc",
+          borderRadius: "8px",
+        }}
+      />
+    </div>
+  );
 }
