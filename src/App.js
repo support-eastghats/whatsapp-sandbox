@@ -20,21 +20,15 @@ function App() {
   return (
     <div style={{ fontFamily: "Arial, sans-serif", padding: "1rem" }}>
       <h2>Custom CCP with Routing Profile Switcher</h2>
-
-      {/* Status message */}
       <div style={{ margin: "1rem 0", fontWeight: "bold", color: ccpStatus.startsWith("❌") ? "red" : "green" }}>
         {ccpStatus}
       </div>
-
-      {/* Loading Spinner */}
       {isLoading && (
         <div style={{ margin: "1rem 0", fontSize: "16px" }}>
           <span>Loading agent session...</span>
           <div className="spinner" />
         </div>
       )}
-
-      {/* Agent Greeting */}
       {!isLoading && agentInfo && (
         <div style={{
           padding: "0.75rem 1rem",
@@ -46,11 +40,7 @@ function App() {
           👋 Hello, <strong>{agentInfo.name}</strong> ({agentInfo.username})
         </div>
       )}
-
-      {/* Profile Switcher */}
       {agentInfo && <ProfileSwitcher userId={agentInfo.userId} />}
-
-      {/* CCP Component */}
       <CCPContainer onAgentReady={handleAgentReady} onCcpError={handleCcpError} />
     </div>
   );
