@@ -85,10 +85,13 @@ module "amplify_app" {
   repo_url   = "https://github.com/support-eastghats/customccp-ui"
   github_token = var.github_token
   branch_name = "dev"
-  stage       = "DEVELOPMENT"
+  stage       = "PRODUCTION"
 
   environment_variables = {
     REACT_APP_ENV = "development"
+    REACT_APP_API_URL             = module.api_gateway.api_url
+    REACT_APP_CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id
+    REACT_APP_CONNECT_CCP_URL     = local.connect_ccp_url
   }
 
   build_spec = file("${path.module}/buildspec.yml")
