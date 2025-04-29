@@ -6,6 +6,10 @@ data "aws_connect_instance" "default" {
   instance_alias = "eastghats-dev"
 }
 
+data "aws_amplify_app" "existing" {
+  name = "customccp-ui"
+}
+
 locals {
   connect_ccp_url = "https://${data.aws_connect_instance.default.instance_alias}.awsapps.com/connect/ccp-v2/"
 }
@@ -77,15 +81,8 @@ module "api_gateway" {
   }
 }
 
-module "amplify_app" {
-  source        = "../../modules/amplify"
-  app_name      = "custom-ccp"
-  repo_url      = "https://github.com/support-eastghats/customccp-ui"
-  github_token  = var.github_token
-  branch_name   = "main"
-  stage         = "DEVELOPMENT"
-  domain_name   = "dev.ccp.eastghats.com"
-  domain_prefix = ""
+resource "aws_amplify_app_environment_variables" "update_env" {
+  app_id = data.aws_amplify_app.existing.app_id
 
   environment_variables = {
     REACT_APP_REGION         = "eu-west-2"
@@ -93,8 +90,7 @@ module "amplify_app" {
     REACT_APP_API_BASE_URL   = module.api_gateway.api_url
   }
 
-  tags = {
-    Project = "CustomCCP"
-    Env     = "dev"
-  }
+  depends_on = [
+    module.api_gateway
+  ]
 }

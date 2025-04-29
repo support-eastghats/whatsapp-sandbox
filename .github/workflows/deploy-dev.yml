@@ -39,19 +39,10 @@ jobs:
             echo "::error ::GitHub token is missing or not passed properly!"
             exit 1
           else
-            echo "GitHub token is set. Length: ${#TF_VAR_github_token}"
+            echo "✅ GitHub token is set. Length: ${#TF_VAR_github_token}"
           fi
         env:
           TF_VAR_github_token: ${{ secrets.TF_VAR_github_token }}
-
-      - name: Terraform Destroy Amplify App
-        working-directory: ./envs/dev
-        env:
-          TF_VAR_github_token: ${{ secrets.TF_VAR_github_token }}
-        run: |
-          terraform destroy -target=module.amplify_app.aws_amplify_domain_association.domain -auto-approve || echo "Domain not found or already deleted"
-          terraform destroy -target=module.amplify_app.aws_amplify_branch.main_branch -auto-approve || echo "Branch not found or already deleted"
-          terraform destroy -target=module.amplify_app.aws_amplify_app.this -auto-approve || echo "App not found or already deleted"
 
       - name: Terraform Apply
         working-directory: ./envs/dev
