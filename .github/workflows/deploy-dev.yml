@@ -33,17 +33,6 @@ jobs:
             -backend-config="key=dev/terraform.tfstate" \
             -backend-config="region=eu-west-2"
 
-      - name: 🔍 Debug GitHub token length
-        run: |
-          if [ -z "$TF_VAR_github_token" ]; then
-            echo "::error ::GitHub token is missing or not passed properly!"
-            exit 1
-          else
-            echo "✅ GitHub token is set. Length: ${#TF_VAR_github_token}"
-          fi
-        env:
-          TF_VAR_github_token: ${{ secrets.TF_VAR_github_token }}
-
       - name: Terraform Apply
         working-directory: ./envs/dev
         env:

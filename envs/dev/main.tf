@@ -79,24 +79,22 @@ module "api_gateway" {
 }
 
 module "amplify_app" {
-  source             = "../../modules/amplify"
-  existing_app_id    = local.amplify_app_id 
-  app_name           = "customccp-ui" 
-  repo_url           = "https://github.com/support-eastghats/customccp-ui" 
-  branch_name        = "main"
-  stage              = "DEVELOPMENT"
-  domain_name        = "dev.ccp.eastghats.com"
-  domain_prefix      = ""
-  github_token       = var.github_token
+  source = "../../modules/amplify"
+
+  app_name   = "customccp-ui"
+  repo_url   = "https://github.com/support-eastghats/customccp-ui"
+  github_token = var.github_token
+  branch_name = "dev"
+  stage       = "development"
 
   environment_variables = {
-    REACT_APP_REGION         = "eu-west-2"
-    REACT_APP_CCP_URL        = local.connect_ccp_url
-    REACT_APP_API_BASE_URL   = module.api_gateway.api_url
+    REACT_APP_ENV = "development"
   }
 
+  build_spec = file("${path.module}/buildspec.yml")
+
   tags = {
-    Project = "CustomCCP"
-    Env     = "dev"
+    Environment = "dev"
+    Project     = "custom-ccp"
   }
 }
