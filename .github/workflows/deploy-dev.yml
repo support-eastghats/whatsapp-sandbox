@@ -44,6 +44,13 @@ jobs:
         env:
           TF_VAR_github_token: ${{ secrets.TF_VAR_github_token }}
 
+      - name: Terraform Destroy Amplify App
+        working-directory: ./envs/dev
+        env:
+          TF_VAR_github_token: ${{ secrets.TF_VAR_github_token }}
+        run: |
+          terraform destroy -target=module.amplify_app -auto-approve || echo "Nothing to destroy"
+
       - name: Terraform Apply
         working-directory: ./envs/dev
         env:

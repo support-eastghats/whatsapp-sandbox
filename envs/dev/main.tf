@@ -80,7 +80,7 @@ module "api_gateway" {
 module "amplify_app" {
   source        = "../../modules/amplify"
   app_name      = "custom-ccp"
-  repo_url      = "https://github.com/support-eastghats/customccp-ui.git"
+  repo_url      = "https://github.com/support-eastghats/customccp-ui"
   github_token  = var.github_token
   branch_name   = "main"
   stage         = "DEVELOPMENT"
