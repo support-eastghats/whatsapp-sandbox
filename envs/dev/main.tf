@@ -84,7 +84,7 @@ module "amplify_app" {
   app_name   = "customccp-ui"
   repo_url   = "https://github.com/support-eastghats/customccp-ui"
   github_token = var.github_token
-  branch_name = "dev"
+  branch_name = "main"
   stage       = "PRODUCTION"
 
   environment_variables = {
