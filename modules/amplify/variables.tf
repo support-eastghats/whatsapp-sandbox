@@ -14,6 +14,11 @@ variable "github_token" {
   sensitive   = true
 }
 
+variable "existing_app_id" {
+  description = "Existing Amplify app ID to update"
+  type        = string
+}
+
 variable "branch_name" {
   description = "Branch to auto-deploy from"
   type        = string
@@ -46,4 +51,11 @@ variable "domain_prefix" {
 variable "tags" {
   type        = map(string)
   default     = {}
+}
+
+
+resource "aws_amplify_app_environment_variables" "update_env" {
+  app_id = var.existing_app_id
+
+  environment_variables = var.environment_variables
 }

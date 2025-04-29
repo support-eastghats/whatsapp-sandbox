@@ -1,4 +1,6 @@
 resource "aws_amplify_app" "this" {
+  count = var.existing_app_id == "" ? 1 : 0
+
   name        = var.app_name
   repository  = var.repo_url
   platform    = "WEB"
@@ -23,18 +25,16 @@ resource "aws_amplify_app" "this" {
 }
 
 resource "aws_amplify_branch" "main_branch" {
-  app_id            = aws_amplify_app.this.id
+  app_id            = var.existing_app_id != "" ? var.existing_app_id : aws_amplify_app.this[0].id
   branch_name       = var.branch_name
   stage             = var.stage
   framework         = "React"
   enable_auto_build = true
-
-  depends_on = [aws_amplify_app.this]
 }
 
 resource "aws_amplify_domain_association" "domain" {
   count       = var.domain_name != null ? 1 : 0
-  app_id      = aws_amplify_app.this.id
+  app_id      = var.existing_app_id != "" ? var.existing_app_id : aws_amplify_app.this[0].id
   domain_name = var.domain_name
 
   sub_domain {

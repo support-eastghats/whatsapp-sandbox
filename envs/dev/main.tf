@@ -7,6 +7,7 @@ data "aws_connect_instance" "default" {
 }
 
 locals {
+  amplify_app_id = "d1b8m7s8f6rgmd"
   connect_ccp_url = "https://${data.aws_connect_instance.default.instance_alias}.awsapps.com/connect/ccp-v2/"
 }
 
@@ -67,8 +68,8 @@ module "api_gateway" {
   name   = "eastghats-ccp-api-dev"
 
   routes = {
-    "/getRoutingProfiles"    = { method = "POST", lambda_uri = module.get_profiles_ccp.lambda_uri },
-    "/updateRoutingProfiles" = { method = "POST", lambda_uri = module.update_profiles_ccp.lambda_uri }
+    "/getRoutingProfiles"     = { method = "POST", lambda_uri = module.get_profiles_ccp.lambda_uri },
+    "/updateRoutingProfiles"  = { method = "POST", lambda_uri = module.update_profiles_ccp.lambda_uri }
   }
 
   tags = {
@@ -78,14 +79,15 @@ module "api_gateway" {
 }
 
 module "amplify_app" {
-  source        = "../../modules/amplify"
-  app_name      = "customccp-ui"
-  repo_url      = "https://github.com/support-eastghats/customccp-ui"
-  github_token  = var.github_token
-  branch_name   = "main"
-  stage         = "PRODUCTION"
-  domain_name   = "dev.ccp.eastghats.com"
-  domain_prefix = ""
+  source             = "../../modules/amplify"
+  existing_app_id    = local.amplify_app_id 
+  app_name           = "customccp-ui" 
+  repo_url           = "https://github.com/support-eastghats/customccp-ui" 
+  branch_name        = "main"
+  stage              = "DEVELOPMENT"
+  domain_name        = "dev.ccp.eastghats.com"
+  domain_prefix      = ""
+  github_token       = var.github_token
 
   environment_variables = {
     REACT_APP_REGION         = "eu-west-2"
