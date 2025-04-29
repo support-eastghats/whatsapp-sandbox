@@ -85,7 +85,7 @@ module "amplify_app" {
   repo_url   = "https://github.com/support-eastghats/customccp-ui"
   github_token = var.github_token
   branch_name = "dev"
-  stage       = "development"
+  stage       = "DEVELOPMENT"
 
   environment_variables = {
     REACT_APP_ENV = "development"
