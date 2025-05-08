@@ -56,6 +56,7 @@ module "update_profiles_ccp" {
   env_vars = {
     STAGE = "dev"
     CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id
+    Deploy_user_name = "Pavithran"
   }
   tags = {
     Project     = "eastghats-ccp"
@@ -89,9 +90,11 @@ module "amplify_app" {
 
   environment_variables = {
     REACT_APP_ENV = "development"
-    REACT_APP_API_URL             = module.api_gateway.api_url
+    REACT_APP_DISPURL             = module.api_gateway.api_url
     REACT_APP_CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id
-    REACT_APP_CONNECT_CCP_URL     = local.connect_ccp_url
+    REACT_APP_CCPURL              = local.connect_ccp_url
+    REACT_APP_REGION              = "eu-west-2"
+    REACT_APP_LOGINURL            = "https://accounts.google.com/o/saml2/initsso?idpid=C00j5cpqj&spid=332463133108&forceauthn=false&authuser=0"
   }
 
   build_spec = file("${path.module}/buildspec.yml")
