@@ -72,20 +72,24 @@ resource "aws_api_gateway_integration_response" "integration_response" {
   ]
 }
 
+locals {
+  unique_paths = tomap({ for k, v in var.routes : trim(v.path, "/") => aws_api_gateway_resource.root_resource[k].id })
+}
+
 resource "aws_api_gateway_method" "options" {
-  for_each = var.routes
+  for_each = local.unique_paths
 
   rest_api_id = aws_api_gateway_rest_api.this.id
-  resource_id = aws_api_gateway_resource.root_resource[each.key].id
+  resource_id = each.value
   http_method = "OPTIONS"
   authorization = "NONE"
 }
 
 resource "aws_api_gateway_method_response" "options_response" {
-  for_each = var.routes
+  for_each = local.unique_paths
 
   rest_api_id = aws_api_gateway_rest_api.this.id
-  resource_id = aws_api_gateway_resource.root_resource[each.key].id
+  resource_id = each.value
   http_method = "OPTIONS"
   status_code = "200"
 
@@ -101,10 +105,10 @@ resource "aws_api_gateway_method_response" "options_response" {
 }
 
 resource "aws_api_gateway_integration" "options" {
-  for_each = var.routes
+  for_each = local.unique_paths
 
   rest_api_id = aws_api_gateway_rest_api.this.id
-  resource_id = aws_api_gateway_resource.root_resource[each.key].id
+  resource_id = each.value
   http_method = "OPTIONS"
 
   type = "MOCK"
@@ -115,10 +119,10 @@ resource "aws_api_gateway_integration" "options" {
 }
 
 resource "aws_api_gateway_integration_response" "options" {
-  for_each = var.routes
+  for_each = local.unique_paths
 
   rest_api_id = aws_api_gateway_rest_api.this.id
-  resource_id = aws_api_gateway_resource.root_resource[each.key].id
+  resource_id = each.value
   http_method = "OPTIONS"
   status_code = "200"
 
