@@ -1,6 +1,6 @@
-output "rest_api_id" {
+output "api_id" {
   value       = aws_api_gateway_rest_api.this.id
-  description = "REST API ID"
+  description = "API Gateway ID"
 }
 
 output "rest_api_url" {
