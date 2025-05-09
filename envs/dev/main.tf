@@ -117,7 +117,7 @@ module "set_resume" {
 module "api_gateway" {
   source = "../../modules/multi-lambda-api-gateway"
   name   = "eastghats-ccp-api-dev"
-  stage_name = "$default"
+  stage_name = "dev"
 
   routes = {
     "getRoutingProfiles"     = { path = "/getRoutingProfiles", method = "POST", lambda_uri = module.get_profiles_ccp.lambda_uri },
