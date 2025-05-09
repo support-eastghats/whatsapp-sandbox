@@ -1,3 +1,5 @@
+# envs/dev/main.tf
+
 provider "aws" {
   region = "eu-west-2"
 }
@@ -7,7 +9,7 @@ data "aws_connect_instance" "default" {
 }
 
 locals {
-  amplify_app_id = "d1b8m7s8f6rgmd"
+  amplify_app_id  = "d1b8m7s8f6rgmd"
   connect_ccp_url = "https://${data.aws_connect_instance.default.instance_alias}.my.connect.aws/ccp-v2/"
 }
 
@@ -19,9 +21,9 @@ variable "github_token" {
 }
 
 module "iam" {
-  source        = "../../modules/iam"
-  role_name     = "eastghats-ccp-lambda-role-dev"
-  force_create  = true
+  source       = "../../modules/iam"
+  role_name    = "eastghats-ccp-lambda-role-dev"
+  force_create = true
 
   tags = {
     Project     = "eastghats-ccp"
@@ -37,7 +39,7 @@ module "get_profiles_ccp" {
   lambda_role_arn  = module.iam.lambda_exec_role_arn
   api_gateway_id   = module.api_gateway.api_id
   env_vars = {
-    STAGE = "dev"
+    STAGE              = "dev"
     CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id
   }
   tags = {
@@ -54,7 +56,7 @@ module "update_profiles_ccp" {
   lambda_role_arn  = module.iam.lambda_exec_role_arn
   api_gateway_id   = module.api_gateway.api_id
   env_vars = {
-    STAGE = "dev"
+    STAGE              = "dev"
     CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id
   }
   tags = {
@@ -67,11 +69,11 @@ module "set_pause_resume_attr" {
   source           = "../../modules/lambda"
   function_name    = "setpauseresumeattr"
   handler          = "index.handler"
-  lambda_zip_path  = "../../lambda-code/setpauseresumeattr.zip"
+  lambda_zip_path  = "../../lambda-code/setpauseresumeatt-v1.zip"
   lambda_role_arn  = module.iam.lambda_exec_role_arn
   api_gateway_id   = module.api_gateway.api_id
   env_vars = {
-    STAGE = "dev"
+    STAGE              = "dev"
     CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id
   }
   tags = {
@@ -84,11 +86,11 @@ module "set_pause" {
   source           = "../../modules/lambda"
   function_name    = "setpause"
   handler          = "index.handler"
-  lambda_zip_path  = "../../lambda-code/setpause.zip"
+  lambda_zip_path  = "../../lambda-code/setpause-v1.zip"
   lambda_role_arn  = module.iam.lambda_exec_role_arn
   api_gateway_id   = module.api_gateway.api_id
   env_vars = {
-    STAGE = "dev"
+    STAGE              = "dev"
     CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id
   }
   tags = {
@@ -101,11 +103,11 @@ module "set_resume" {
   source           = "../../modules/lambda"
   function_name    = "setresume"
   handler          = "index.handler"
-  lambda_zip_path  = "../../lambda-code/setresume.zip"
+  lambda_zip_path  = "../../lambda-code/setresume-v1.zip"
   lambda_role_arn  = module.iam.lambda_exec_role_arn
   api_gateway_id   = module.api_gateway.api_id
   env_vars = {
-    STAGE = "dev"
+    STAGE              = "dev"
     CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id
   }
   tags = {
@@ -115,18 +117,17 @@ module "set_resume" {
 }
 
 module "api_gateway" {
-  source = "../../modules/multi-lambda-api-gateway"
-  name   = "eastghats-ccp-api-dev"
+  source     = "../../modules/multi-lambda-api-gateway"
+  name       = "eastghats-ccp-api-dev"
   stage_name = "dev"
 
   routes = {
     "getRoutingProfiles"     = { path = "/getRoutingProfiles", method = "POST", lambda_uri = module.get_profiles_ccp.lambda_uri },
     "updateRoutingProfiles"  = { path = "/updateRoutingProfiles", method = "POST", lambda_uri = module.update_profiles_ccp.lambda_uri },
-    "setpauseresumeattr"     = { path = "/setpauseresumeattr", method = "PUT", lambda_uri = module.set_pause_resume_attr.lambda_uri },
+    "setpauseresumeattr"     = { path = "/setpauseresumeattr", method = "PUT",  lambda_uri = module.set_pause_resume_attr.lambda_uri },
     "setpause"               = { path = "/setpause", method = "POST", lambda_uri = module.set_pause.lambda_uri },
     "setresume"              = { path = "/setresume", method = "POST", lambda_uri = module.set_resume.lambda_uri }
   }
-
 
   tags = {
     Project     = "eastghats-ccp"
@@ -135,16 +136,15 @@ module "api_gateway" {
 }
 
 module "amplify_app" {
-  source = "../../modules/amplify"
-
-  app_name   = "customccp-ui"
-  repo_url   = "https://github.com/support-eastghats/customccp-ui"
-  github_token = var.github_token
-  branch_name = "main"
-  stage       = "PRODUCTION"
+  source        = "../../modules/amplify"
+  app_name      = "customccp-ui"
+  repo_url      = "https://github.com/support-eastghats/customccp-ui"
+  github_token  = var.github_token
+  branch_name   = "main"
+  stage         = "PRODUCTION"
 
   environment_variables = {
-    REACT_APP_ENV = "development"
+    REACT_APP_ENV                 = "development"
     REACT_APP_DISPURL             = module.api_gateway.rest_api_url
     REACT_APP_APIKEY              = module.api_gateway.api_key_value
     REACT_APP_CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id

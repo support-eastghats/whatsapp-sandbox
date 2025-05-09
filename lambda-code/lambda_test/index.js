@@ -1,33 +1,40 @@
-import { ConnectClient, ResumeContactRecordingCommand } from "@aws-sdk/client-connect";
+import { ConnectClient, UpdateContactAttributesCommand } from "@aws-sdk/client-connect";
 
 const connectClient = new ConnectClient({ region: "eu-west-2" });
 
 export const handler = async (event) => {
-  console.log("setresume event:", JSON.stringify(event));
+  console.log("setpauseresumeattr event:", JSON.stringify(event));
 
   const response = {
     statusCode: 200,
-    headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Content-Type,x-api-key',
+      'Access-Control-Allow-Methods': 'PUT,OPTIONS',
+      'Content-Type': 'application/json'
+    },
     body: ''
   };
 
   try {
-    const body = JSON.parse(event.body || '{}');
-    const { contactId, instanceId } = JSON.parse(body.body || '{}');
+    const { pauseCtrData, resumeCtrData, contactId, instanceId } = JSON.parse(event.body || '{}');
 
-    const command = new ResumeContactRecordingCommand({
-      ContactId: contactId,
+    const command = new UpdateContactAttributesCommand({
       InitialContactId: contactId,
-      InstanceId: instanceId
+      InstanceId: instanceId,
+      Attributes: {
+        'PAUSE-MISDATA': pauseCtrData,
+        'RESUME-MISDATA': resumeCtrData
+      }
     });
 
     await connectClient.send(command);
-    response.body = JSON.stringify({ message: 'Recording resumed successfully' });
+    response.body = JSON.stringify({ message: 'Attributes updated successfully' });
 
   } catch (err) {
-    console.error("setresume error:", err);
+    console.error("setpauseresumeattr error:", err);
     response.statusCode = 500;
-    response.body = JSON.stringify({ error: 'Failed to resume recording' });
+    response.body = JSON.stringify({ error: 'Failed to update attributes' });
   }
 
   return response;
