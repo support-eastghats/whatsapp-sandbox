@@ -4,7 +4,7 @@ variable "region" {
 }
 
 variable "api_gateway_id" {
-  description = "API Gateway ID used to trigger the Lambda"
+  description = "API Gateway ID to allow invoke permissions"
   type        = string
 }
 
