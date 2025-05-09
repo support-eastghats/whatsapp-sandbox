@@ -1,3 +1,5 @@
+# main.tf (updated to include explicit OPTIONS support per route for CORS)
+
 resource "aws_api_gateway_rest_api" "this" {
   name        = var.name
   description = "Managed by Terraform"
@@ -72,15 +74,73 @@ resource "aws_api_gateway_integration_response" "integration_response" {
   ]
 }
 
+# --- CORS OPTIONS METHOD SUPPORT ---
+resource "aws_api_gateway_method" "options" {
+  for_each = var.routes
+
+  rest_api_id   = aws_api_gateway_rest_api.this.id
+  resource_id   = aws_api_gateway_resource.root_resource[each.key].id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_method_response" "options" {
+  for_each = var.routes
+
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  resource_id = aws_api_gateway_resource.root_resource[each.key].id
+  http_method = "OPTIONS"
+  status_code = "200"
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = true,
+    "method.response.header.Access-Control-Allow-Methods" = true,
+    "method.response.header.Access-Control-Allow-Headers" = true
+  }
+}
+
+resource "aws_api_gateway_integration" "options" {
+  for_each = var.routes
+
+  rest_api_id             = aws_api_gateway_rest_api.this.id
+  resource_id             = aws_api_gateway_resource.root_resource[each.key].id
+  http_method             = "OPTIONS"
+  type                    = "MOCK"
+  integration_http_method = "OPTIONS"
+
+  request_templates = {
+    "application/json" = "{ \"statusCode\": 200 }"
+  }
+}
+
+resource "aws_api_gateway_integration_response" "options" {
+  for_each = var.routes
+
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  resource_id = aws_api_gateway_resource.root_resource[each.key].id
+  http_method = "OPTIONS"
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'",
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,OPTIONS,PUT,DELETE'",
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  }
+}
+
+# --- Deployment and Stage ---
 resource "aws_api_gateway_deployment" "this" {
   depends_on = [
     aws_api_gateway_integration.proxy_integrations,
-    aws_api_gateway_method.proxy_methods
+    aws_api_gateway_method.proxy_methods,
+    aws_api_gateway_method.options
   ]
-
   rest_api_id = aws_api_gateway_rest_api.this.id
 }
-
 
 resource "aws_api_gateway_stage" "this" {
   stage_name    = var.stage_name
@@ -88,6 +148,7 @@ resource "aws_api_gateway_stage" "this" {
   deployment_id = aws_api_gateway_deployment.this.id
 }
 
+# --- API Key and Usage Plan ---
 resource "aws_api_gateway_api_key" "default" {
   name    = "${var.name}-key"
   enabled = true

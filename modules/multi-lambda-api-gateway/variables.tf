@@ -1,6 +1,17 @@
 variable "name" {
   type        = string
-  description = "API Gateway name"
+  description = "Name of the API Gateway"
+}
+
+variable "stage_name" {
+  type        = string
+  description = "Name of the deployment stage (e.g., dev, prod)"
+}
+
+variable "region" {
+  type        = string
+  description = "AWS region for deployment"
+  default     = "eu-west-2"
 }
 
 variable "routes" {
@@ -9,21 +20,10 @@ variable "routes" {
     path       = string
     lambda_uri = string
   }))
-  description = "Map of route configurations"
+  description = "Map of route paths and Lambda URIs"
 }
 
 variable "tags" {
-  type = map(string)
+  type        = map(string)
+  description = "Tags to apply to resources"
 }
-
-variable "region" {
-  description = "AWS Region"
-  type        = string
-  default     = "eu-west-2"
-}
-
-variable "stage_name" {
-  type        = string
-  description = "API Gateway stage name"
-}
-
