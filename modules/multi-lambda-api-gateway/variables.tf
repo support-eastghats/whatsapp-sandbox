@@ -24,6 +24,6 @@ variable "region" {
 
 variable "stage_name" {
   type        = string
-  description = "Name of the API Gateway stage"
-  default     = "$default"
+  description = "API Gateway stage name"
 }
+
