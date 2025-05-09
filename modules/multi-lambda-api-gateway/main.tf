@@ -8,7 +8,7 @@ resource "aws_api_gateway_resource" "root_resource" {
 
   rest_api_id = aws_api_gateway_rest_api.this.id
   parent_id   = aws_api_gateway_rest_api.this.root_resource_id
-  path_part   = trim(each.key, "/")
+  path_part   = trim(each.value.path, "/")
 }
 
 resource "aws_api_gateway_method" "proxy_methods" {
@@ -21,16 +21,7 @@ resource "aws_api_gateway_method" "proxy_methods" {
   api_key_required = true
 }
 
-resource "aws_api_gateway_method" "options" {
-  for_each = var.routes
-
-  rest_api_id   = aws_api_gateway_rest_api.this.id
-  resource_id   = aws_api_gateway_resource.root_resource[each.key].id
-  http_method   = "OPTIONS"
-  authorization = "NONE"
-}
-
-resource "aws_api_gateway_method_response" "cors_response" {
+resource "aws_api_gateway_method_response" "method_response" {
   for_each = var.routes
 
   rest_api_id = aws_api_gateway_rest_api.this.id
@@ -60,38 +51,6 @@ resource "aws_api_gateway_integration" "proxy_integrations" {
   uri                     = each.value.lambda_uri
 }
 
-resource "aws_api_gateway_integration" "options" {
-  for_each = var.routes
-
-  rest_api_id = aws_api_gateway_rest_api.this.id
-  resource_id = aws_api_gateway_resource.root_resource[each.key].id
-  http_method = "OPTIONS"
-  type        = "MOCK"
-
-  request_templates = {
-    "application/json" = "{\"statusCode\": 200}"
-  }
-}
-
-resource "aws_api_gateway_method_response" "options" {
-  for_each = var.routes
-
-  rest_api_id = aws_api_gateway_rest_api.this.id
-  resource_id = aws_api_gateway_resource.root_resource[each.key].id
-  http_method = "OPTIONS"
-  status_code = "200"
-
-  response_models = {
-    "application/json" = "Empty"
-  }
-
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin"  = true,
-    "method.response.header.Access-Control-Allow-Methods" = true,
-    "method.response.header.Access-Control-Allow-Headers" = true
-  }
-}
-
 resource "aws_api_gateway_integration_response" "integration_response" {
   for_each = var.routes
 
@@ -109,28 +68,7 @@ resource "aws_api_gateway_integration_response" "integration_response" {
   depends_on = [
     aws_api_gateway_method.proxy_methods,
     aws_api_gateway_integration.proxy_integrations,
-    aws_api_gateway_method_response.cors_response
-  ]
-}
-
-resource "aws_api_gateway_integration_response" "options" {
-  for_each = var.routes
-
-  rest_api_id = aws_api_gateway_rest_api.this.id
-  resource_id = aws_api_gateway_resource.root_resource[each.key].id
-  http_method = "OPTIONS"
-  status_code = "200"
-
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin"  = "'*'",
-    "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,OPTIONS'",
-    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,x-api-key'"
-  }
-
-  depends_on = [
-    aws_api_gateway_method.options,
-    aws_api_gateway_integration.options,
-    aws_api_gateway_method_response.options
+    aws_api_gateway_method_response.method_response
   ]
 }
 
