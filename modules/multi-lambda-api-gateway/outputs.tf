@@ -4,12 +4,12 @@ output "rest_api_id" {
 }
 
 output "rest_api_url" {
-  value       = "https://${aws_apigatewayv2_api.http_api.id}.execute-api.${var.region}.amazonaws.com/${var.stage_name}"
+  value       = "https://${aws_apigatewayv2_api.api.id}.execute-api.${var.region}.amazonaws.com/${var.stage_name}"
   description = "Invoke URL"
 }
 
 output "api_key_value" {
-  value       = aws_api_gateway_api_key.this.value
-  description = "API key for clients"
+  value       = aws_api_gateway_api_key.default.value
+  description = "API Key for usage in client"
   sensitive   = true
 }

@@ -120,12 +120,13 @@ module "api_gateway" {
   stage_name = "$default"
 
   routes = {
-    "/getRoutingProfiles"     = { method = "POST", lambda_uri = module.get_profiles_ccp.lambda_uri },
-    "/updateRoutingProfiles"  = { method = "POST", lambda_uri = module.update_profiles_ccp.lambda_uri },
-    "/setpauseresumeattr"     = { method = "put", lambda_uri = module.set_pause_resume_attr.lambda_uri },
-    "/setpause"               = { method = "POST", lambda_uri = module.set_pause.lambda_uri },
-    "/setresume"              = { method = "POST", lambda_uri = module.set_resume.lambda_uri }
+    "getRoutingProfiles"     = { path = "/getRoutingProfiles", method = "POST", lambda_uri = module.get_profiles_ccp.lambda_uri },
+    "updateRoutingProfiles"  = { path = "/updateRoutingProfiles", method = "POST", lambda_uri = module.update_profiles_ccp.lambda_uri },
+    "setpauseresumeattr"     = { path = "/setpauseresumeattr", method = "PUT", lambda_uri = module.set_pause_resume_attr.lambda_uri },
+    "setpause"               = { path = "/setpause", method = "POST", lambda_uri = module.set_pause.lambda_uri },
+    "setresume"              = { path = "/setresume", method = "POST", lambda_uri = module.set_resume.lambda_uri }
   }
+
 
   tags = {
     Project     = "eastghats-ccp"
