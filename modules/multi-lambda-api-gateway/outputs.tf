@@ -4,7 +4,7 @@ output "rest_api_id" {
 }
 
 output "rest_api_url" {
-  value       = "https://${aws_apigatewayv2_api.api.id}.execute-api.${var.region}.amazonaws.com/${var.stage_name}"
+  value       = "https://${aws_api_gateway_rest_api.this.id}.execute-api.${var.region}.amazonaws.com/${var.stage_name}"
   description = "Invoke URL"
 }
 
