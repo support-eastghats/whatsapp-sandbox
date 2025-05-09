@@ -64,6 +64,12 @@ resource "aws_api_gateway_integration_response" "integration_response" {
     "method.response.header.Access-Control-Allow-Methods" = "'*'",
     "method.response.header.Access-Control-Allow-Headers" = "'*'"
   }
+
+  depends_on = [
+    aws_api_gateway_method.proxy_methods,
+    aws_api_gateway_integration.proxy_integrations,
+    aws_api_gateway_method_response.cors_response
+  ]
 }
 
 resource "aws_api_gateway_deployment" "this" {
@@ -73,8 +79,8 @@ resource "aws_api_gateway_deployment" "this" {
   ]
 
   rest_api_id = aws_api_gateway_rest_api.this.id
-  stage_name  = var.stage_name
 }
+
 
 resource "aws_api_gateway_stage" "this" {
   stage_name    = var.stage_name
