@@ -1,4 +1,3 @@
-
 variable "name" {
   type        = string
   description = "API Gateway name"
@@ -7,31 +6,24 @@ variable "name" {
 variable "routes" {
   type = map(object({
     method     = string
+    path       = string
     lambda_uri = string
   }))
-  description = "Map of route paths and Lambda URIs"
+  description = "Map of route configurations"
 }
 
 variable "tags" {
-  type        = map(string)
+  type = map(string)
 }
 
-variable "cors" {
-  description = "CORS configuration for API Gateway"
-  type = object({
-    allow_headers     = list(string)
-    allow_methods     = list(string)
-    allow_origins     = list(string)
-    allow_credentials = bool
-    expose_headers    = list(string)
-    max_age           = number
-  })
-  default = {
-    allow_headers     = ["*"]
-    allow_methods     = ["*"]
-    allow_origins     = ["*"]
-    allow_credentials = false
-    expose_headers    = ["*"]
-    max_age           = 86400
-  }
+variable "region" {
+  description = "AWS Region"
+  type        = string
+  default     = "eu-west-2"
+}
+
+variable "stage_name" {
+  type        = string
+  description = "Name of the API Gateway stage"
+  default     = "$default"
 }

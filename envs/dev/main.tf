@@ -63,13 +63,68 @@ module "update_profiles_ccp" {
   }
 }
 
+module "set_pause_resume_attr" {
+  source           = "../../modules/lambda"
+  function_name    = "setpauseresumeattr"
+  handler          = "index.handler"
+  lambda_zip_path  = "../../lambda-code/setpauseresumeattr.zip"
+  lambda_role_arn  = module.iam.lambda_exec_role_arn
+  api_gateway_id   = module.api_gateway.api_id
+  env_vars = {
+    STAGE = "dev"
+    CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id
+  }
+  tags = {
+    Project     = "eastghats-ccp"
+    Environment = "dev"
+  }
+}
+
+module "set_pause" {
+  source           = "../../modules/lambda"
+  function_name    = "setpause"
+  handler          = "index.handler"
+  lambda_zip_path  = "../../lambda-code/setpause.zip"
+  lambda_role_arn  = module.iam.lambda_exec_role_arn
+  api_gateway_id   = module.api_gateway.api_id
+  env_vars = {
+    STAGE = "dev"
+    CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id
+  }
+  tags = {
+    Project     = "eastghats-ccp"
+    Environment = "dev"
+  }
+}
+
+module "set_resume" {
+  source           = "../../modules/lambda"
+  function_name    = "setresume"
+  handler          = "index.handler"
+  lambda_zip_path  = "../../lambda-code/setresume.zip"
+  lambda_role_arn  = module.iam.lambda_exec_role_arn
+  api_gateway_id   = module.api_gateway.api_id
+  env_vars = {
+    STAGE = "dev"
+    CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id
+  }
+  tags = {
+    Project     = "eastghats-ccp"
+    Environment = "dev"
+  }
+}
+
 module "api_gateway" {
   source = "../../modules/multi-lambda-api-gateway"
   name   = "eastghats-ccp-api-dev"
+  stage_name = "$default"
 
   routes = {
     "/getRoutingProfiles"     = { method = "POST", lambda_uri = module.get_profiles_ccp.lambda_uri },
-    "/updateRoutingProfiles"  = { method = "POST", lambda_uri = module.update_profiles_ccp.lambda_uri }
+    "/updateRoutingProfiles"  = { method = "POST", lambda_uri = module.update_profiles_ccp.lambda_uri },
+    "/setpauseresumeattr"     = { method = "put", lambda_uri = module.set_pause_resume_attr.lambda_uri },
+    "/setpause"               = { method = "POST", lambda_uri = module.set_pause.lambda_uri },
+    "/setresume"              = { method = "POST", lambda_uri = module.set_resume.lambda_uri }
   }
 
   tags = {
@@ -89,7 +144,8 @@ module "amplify_app" {
 
   environment_variables = {
     REACT_APP_ENV = "development"
-    REACT_APP_DISPURL             = module.api_gateway.api_url
+    REACT_APP_DISPURL             = module.api_gateway.rest_api_url
+    REACT_APP_APIKEY              = module.api_gateway.api_key_value
     REACT_APP_CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id
     REACT_APP_CCPURL              = local.connect_ccp_url
     REACT_APP_REGION              = "eu-west-2"

@@ -1,41 +1,104 @@
+resource "aws_api_gateway_rest_api" "this" {
+  name        = var.name
+  description = "Managed by Terraform"
+}
 
-resource "aws_apigatewayv2_api" "http_api" {
-  name          = var.name
-  protocol_type = "HTTP"
+resource "aws_api_gateway_resource" "root_resource" {
+  for_each = var.routes
 
-  cors_configuration {
-    allow_headers     = var.cors.allow_headers
-    allow_methods     = var.cors.allow_methods
-    allow_origins     = var.cors.allow_origins
-    allow_credentials = var.cors.allow_credentials
-    expose_headers    = var.cors.expose_headers
-    max_age           = var.cors.max_age
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  parent_id   = aws_api_gateway_rest_api.this.root_resource_id
+  path_part   = each.key
+}
+
+resource "aws_api_gateway_method" "proxy_methods" {
+  for_each = var.routes
+
+  rest_api_id   = aws_api_gateway_rest_api.this.id
+  resource_id   = aws_api_gateway_resource.root_resource[each.key].id
+  http_method   = upper(each.value.method)
+  authorization = "NONE"
+  api_key_required = true
+}
+
+resource "aws_api_gateway_method_response" "cors_response" {
+  for_each = var.routes
+
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  resource_id = aws_api_gateway_resource.root_resource[each.key].id
+  http_method = upper(each.value.method)
+  status_code = "200"
+
+  response_models = {
+    "application/json" = "Empty"
   }
 
-  tags = var.tags
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = true,
+    "method.response.header.Access-Control-Allow-Methods" = true,
+    "method.response.header.Access-Control-Allow-Headers" = true
+  }
 }
 
-
-resource "aws_apigatewayv2_stage" "default" {
-  api_id      = aws_apigatewayv2_api.http_api.id
-  name        = "$default"
-  auto_deploy = true
-}
-
-resource "aws_apigatewayv2_integration" "lambda_integrations" {
+resource "aws_api_gateway_integration" "proxy_integrations" {
   for_each = var.routes
 
-  api_id             = aws_apigatewayv2_api.http_api.id
-  integration_type   = "AWS_PROXY"
-  integration_uri    = each.value.lambda_uri
-  integration_method = "POST"
-  payload_format_version = "2.0"
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  resource_id = aws_api_gateway_resource.root_resource[each.key].id
+  http_method = upper(each.value.method)
+
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = each.value.lambda_uri
 }
 
-resource "aws_apigatewayv2_route" "api_routes" {
+resource "aws_api_gateway_integration_response" "integration_response" {
   for_each = var.routes
 
-  api_id    = aws_apigatewayv2_api.http_api.id
-  route_key = "${each.value.method} ${each.key}"
-  target    = "integrations/${aws_apigatewayv2_integration.lambda_integrations[each.key].id}"
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  resource_id = aws_api_gateway_resource.root_resource[each.key].id
+  http_method = upper(each.value.method)
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'",
+    "method.response.header.Access-Control-Allow-Methods" = "'*'",
+    "method.response.header.Access-Control-Allow-Headers" = "'*'"
+  }
+}
+
+resource "aws_api_gateway_deployment" "this" {
+  depends_on = [
+    aws_api_gateway_integration.proxy_integrations,
+    aws_api_gateway_method.proxy_methods
+  ]
+
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  stage_name  = var.stage_name
+}
+
+resource "aws_api_gateway_stage" "this" {
+  stage_name    = var.stage_name
+  rest_api_id   = aws_api_gateway_rest_api.this.id
+  deployment_id = aws_api_gateway_deployment.this.id
+}
+
+resource "aws_api_gateway_api_key" "default" {
+  name    = "${var.name}-key"
+  enabled = true
+}
+
+resource "aws_api_gateway_usage_plan" "default" {
+  name = "${var.name}-usage-plan"
+
+  api_stages {
+    api_id = aws_api_gateway_rest_api.this.id
+    stage  = aws_api_gateway_stage.this.stage_name
+  }
+}
+
+resource "aws_api_gateway_usage_plan_key" "default" {
+  key_id        = aws_api_gateway_api_key.default.id
+  key_type      = "API_KEY"
+  usage_plan_id = aws_api_gateway_usage_plan.default.id
 }

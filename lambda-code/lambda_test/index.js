@@ -1,27 +1,34 @@
-const AWS = require("aws-sdk");
-const connect = new AWS.Connect();
+import { ConnectClient, ResumeContactRecordingCommand } from "@aws-sdk/client-connect";
 
-exports.handler = async (event) => {
+const connectClient = new ConnectClient({ region: "eu-west-2" });
+
+export const handler = async (event) => {
+  console.log("setresume event:", JSON.stringify(event));
+
+  const response = {
+    statusCode: 200,
+    headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+    body: ''
+  };
+
   try {
-    const instanceId = process.env.CONNECT_INSTANCE_ID;
-    const { userId, routingProfileId } = JSON.parse(event.body);
+    const body = JSON.parse(event.body || '{}');
+    const { contactId, instanceId } = JSON.parse(body.body || '{}');
 
-    await connect.updateUserRoutingProfile({
-      InstanceId: instanceId,
-      UserId: userId,
-      RoutingProfileId: routingProfileId
-    }).promise();
+    const command = new ResumeContactRecordingCommand({
+      ContactId: contactId,
+      InitialContactId: contactId,
+      InstanceId: instanceId
+    });
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ message: "Routing profile updated successfully" })
-    };
+    await connectClient.send(command);
+    response.body = JSON.stringify({ message: 'Recording resumed successfully' });
 
   } catch (err) {
-    console.error("Error in updateRoutingProfile:", err);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: "Failed to update routing profile" })
-    };
+    console.error("setresume error:", err);
+    response.statusCode = 500;
+    response.body = JSON.stringify({ error: 'Failed to resume recording' });
   }
+
+  return response;
 };
