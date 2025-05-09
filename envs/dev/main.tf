@@ -8,7 +8,7 @@ data "aws_connect_instance" "default" {
 
 locals {
   amplify_app_id = "d1b8m7s8f6rgmd"
-  connect_ccp_url = "https://${data.aws_connect_instance.default.instance_alias}.awsapps.com/connect/ccp-v2/"
+  connect_ccp_url = "https://${data.aws_connect_instance.default.instance_alias}.my.connect.aws/ccp-v2/"
 }
 
 variable "github_token" {
@@ -56,7 +56,6 @@ module "update_profiles_ccp" {
   env_vars = {
     STAGE = "dev"
     CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id
-    Deploy_user_name = "Pavithran"
   }
   tags = {
     Project     = "eastghats-ccp"
