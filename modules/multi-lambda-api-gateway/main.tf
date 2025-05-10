@@ -55,11 +55,18 @@ resource "aws_api_gateway_integration_response" "integration_response" {
   status_code = "200"
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin"  = "'*'",
-    "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,OPTIONS'",
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,OPTIONS'"
     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,x-api-key'"
   }
+
+  depends_on = [
+    aws_api_gateway_method.proxy_methods,
+    aws_api_gateway_method_response.method_response,
+    aws_api_gateway_integration.proxy_integrations
+  ]
 }
+
 
 # --------------------
 # CORS SUPPORT (OPTIONS)
@@ -83,23 +90,26 @@ resource "aws_api_gateway_method" "options" {
   }
 }
 
-resource "aws_api_gateway_method_response" "options_response" {
+resource "aws_api_gateway_integration_response" "options" {
   for_each = local.unique_paths
   rest_api_id = aws_api_gateway_rest_api.this.id
   resource_id = each.value
   http_method = "OPTIONS"
   status_code = "200"
 
-  response_models = {
-    "application/json" = "Empty"
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,x-api-key'"
   }
 
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin"  = true,
-    "method.response.header.Access-Control-Allow-Methods" = true,
-    "method.response.header.Access-Control-Allow-Headers" = true
-  }
+  depends_on = [
+    aws_api_gateway_method.options,
+    aws_api_gateway_method_response.options_response,
+    aws_api_gateway_integration.options
+  ]
 }
+
 
 resource "aws_api_gateway_integration" "options" {
   for_each = local.unique_paths
