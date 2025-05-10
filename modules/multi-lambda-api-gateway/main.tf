@@ -86,6 +86,7 @@ resource "aws_api_gateway_method" "options" {
   resource_id      = each.value
   http_method      = "OPTIONS"
   authorization    = "NONE"
+  api_key_required = false
 }
 
 resource "aws_api_gateway_method_response" "options_response" {
