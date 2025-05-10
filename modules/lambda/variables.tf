@@ -1,6 +1,6 @@
 variable "region" {
   type        = string
-  default     = "ap-south-1"
+  default     = "eu-west-2"
 }
 
 variable "api_gateway_id" {
