@@ -61,8 +61,8 @@ resource "aws_api_gateway_integration_response" "integration_response" {
 
   response_parameters = {
     "method.response.header.Access-Control-Allow-Origin"  = "'*'",
-    "method.response.header.Access-Control-Allow-Methods" = "'*'",
-    "method.response.header.Access-Control-Allow-Headers" = "'*'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,OPTIONS'",
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,x-api-key'"
   }
 
   depends_on = [
@@ -72,6 +72,9 @@ resource "aws_api_gateway_integration_response" "integration_response" {
   ]
 }
 
+# --------------------
+# CORS SUPPORT (OPTIONS)
+# --------------------
 locals {
   unique_paths = tomap({ for k, v in var.routes : trim(v.path, "/") => aws_api_gateway_resource.root_resource[k].id })
 }
@@ -79,11 +82,10 @@ locals {
 resource "aws_api_gateway_method" "options" {
   for_each = local.unique_paths
 
-  rest_api_id = aws_api_gateway_rest_api.this.id
-  resource_id = each.value
-  http_method = "OPTIONS"
-  authorization = "NONE"
-  api_key_required = false
+  rest_api_id      = aws_api_gateway_rest_api.this.id
+  resource_id      = each.value
+  http_method      = "OPTIONS"
+  authorization    = "NONE"
 }
 
 resource "aws_api_gateway_method_response" "options_response" {
@@ -111,8 +113,7 @@ resource "aws_api_gateway_integration" "options" {
   rest_api_id = aws_api_gateway_rest_api.this.id
   resource_id = each.value
   http_method = "OPTIONS"
-
-  type = "MOCK"
+  type        = "MOCK"
 
   request_templates = {
     "application/json" = "{\"statusCode\": 200}"
@@ -144,7 +145,6 @@ resource "aws_api_gateway_deployment" "this" {
     aws_api_gateway_integration.proxy_integrations,
     aws_api_gateway_integration.options
   ]
-
   rest_api_id = aws_api_gateway_rest_api.this.id
 }
 
