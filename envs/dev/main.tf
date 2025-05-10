@@ -1,4 +1,4 @@
-# envs/dev/main.tf
+# envs/dev/main.tf (RE-ORDERED AND UPDATED)
 
 provider "aws" {
   region = "eu-west-2"
@@ -18,6 +18,25 @@ variable "github_token" {
   type        = string
   sensitive   = true
   default     = ""
+}
+
+module "api_gateway" {
+  source     = "../../modules/multi-lambda-api-gateway"
+  name       = "eastghats-ccp-api-dev"
+  stage_name = "dev"
+
+  routes = {
+    "getRoutingProfiles"     = { path = "/getRoutingProfiles", method = "POST", lambda_uri = module.get_profiles_ccp.lambda_uri },
+    "updateRoutingProfiles"  = { path = "/updateRoutingProfiles", method = "POST", lambda_uri = module.update_profiles_ccp.lambda_uri },
+    "setpauseresumeattr"     = { path = "/setpauseresumeattr", method = "PUT",  lambda_uri = module.set_pause_resume_attr.lambda_uri },
+    "setpause"               = { path = "/setpause", method = "POST", lambda_uri = module.set_pause.lambda_uri },
+    "setresume"              = { path = "/setresume", method = "POST", lambda_uri = module.set_resume.lambda_uri }
+  }
+
+  tags = {
+    Project     = "eastghats-ccp"
+    Environment = "dev"
+  }
 }
 
 module "iam" {
@@ -110,25 +129,6 @@ module "set_resume" {
     STAGE              = "dev"
     CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id
   }
-  tags = {
-    Project     = "eastghats-ccp"
-    Environment = "dev"
-  }
-}
-
-module "api_gateway" {
-  source     = "../../modules/multi-lambda-api-gateway"
-  name       = "eastghats-ccp-api-dev"
-  stage_name = "dev"
-
-  routes = {
-    "getRoutingProfiles"     = { path = "/getRoutingProfiles", method = "POST", lambda_uri = module.get_profiles_ccp.lambda_uri },
-    "updateRoutingProfiles"  = { path = "/updateRoutingProfiles", method = "POST", lambda_uri = module.update_profiles_ccp.lambda_uri },
-    "setpauseresumeattr"     = { path = "/setpauseresumeattr", method = "PUT",  lambda_uri = module.set_pause_resume_attr.lambda_uri },
-    "setpause"               = { path = "/setpause", method = "POST", lambda_uri = module.set_pause.lambda_uri },
-    "setresume"              = { path = "/setresume", method = "POST", lambda_uri = module.set_resume.lambda_uri }
-  }
-
   tags = {
     Project     = "eastghats-ccp"
     Environment = "dev"
