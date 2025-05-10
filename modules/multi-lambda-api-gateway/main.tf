@@ -90,6 +90,40 @@ resource "aws_api_gateway_method" "options" {
   }
 }
 
+resource "aws_api_gateway_method_response" "options_response" {
+  for_each = local.unique_paths
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  resource_id = each.value
+  http_method = "OPTIONS"
+  status_code = "200"
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = true,
+    "method.response.header.Access-Control-Allow-Methods" = true,
+    "method.response.header.Access-Control-Allow-Headers" = true
+  }
+}
+
+resource "aws_api_gateway_integration" "options" {
+  for_each = local.unique_paths
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  resource_id = each.value
+  http_method = "OPTIONS"
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = <<EOF
+{
+  "statusCode": 200
+}
+EOF
+  }
+}
+
 resource "aws_api_gateway_integration_response" "options" {
   for_each = local.unique_paths
   rest_api_id = aws_api_gateway_rest_api.this.id
@@ -110,22 +144,6 @@ resource "aws_api_gateway_integration_response" "options" {
   ]
 }
 
-
-resource "aws_api_gateway_integration" "options" {
-  for_each = local.unique_paths
-  rest_api_id = aws_api_gateway_rest_api.this.id
-  resource_id = each.value
-  http_method = "OPTIONS"
-  type        = "MOCK"
-
-  request_templates = {
-    "application/json" = <<EOF
-{
-  "statusCode": 200
-}
-EOF
-  }
-}
 
 resource "aws_api_gateway_deployment" "this" {
   depends_on = [
