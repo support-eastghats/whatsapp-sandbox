@@ -40,7 +40,8 @@ resource "aws_iam_role_policy" "lambda_policy" {
         Effect = "Allow",
         Action = [
           "logs:*",
-          "s3:*"
+          "s3:*",
+          "connect:*"
         ],
         Resource = "*"
       }
