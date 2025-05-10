@@ -80,13 +80,18 @@ locals {
 }
 
 resource "aws_api_gateway_method" "options" {
-  for_each = local.unique_paths
-
-  rest_api_id      = aws_api_gateway_rest_api.this.id
-  resource_id      = each.value
-  http_method      = "OPTIONS"
-  authorization    = "NONE"
+  for_each       = local.unique_paths
+  rest_api_id    = aws_api_gateway_rest_api.this.id
+  resource_id    = each.value
+  http_method    = "OPTIONS"
+  authorization  = "NONE"
   api_key_required = false
+
+  request_parameters = {
+    "method.request.header.Origin" = false
+    "method.request.header.Access-Control-Request-Method" = false
+    "method.request.header.Access-Control-Request-Headers" = false
+  }
 }
 
 resource "aws_api_gateway_method_response" "options_response" {
