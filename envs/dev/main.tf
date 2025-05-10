@@ -145,8 +145,8 @@ module "amplify_app" {
 
   environment_variables = {
     REACT_APP_ENV                 = "development"
-    REACT_APP_DISPURL             = module.api_gateway.rest_api_url
-    REACT_APP_APIKEY              = module.api_gateway.api_key_value
+    # REACT_APP_DISPURL             = module.api_gateway.rest_api_url
+    # REACT_APP_APIKEY              = module.api_gateway.api_key_value
     REACT_APP_CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id
     REACT_APP_CCPURL              = local.connect_ccp_url
     REACT_APP_REGION              = "eu-west-2"
