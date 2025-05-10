@@ -4,8 +4,7 @@ resource "aws_api_gateway_rest_api" "this" {
 }
 
 resource "aws_api_gateway_resource" "root_resource" {
-  for_each = var.routes
-
+  for_each   = var.routes
   rest_api_id = aws_api_gateway_rest_api.this.id
   parent_id   = aws_api_gateway_rest_api.this.root_resource_id
   path_part   = trim(each.value.path, "/")
@@ -13,7 +12,6 @@ resource "aws_api_gateway_resource" "root_resource" {
 
 resource "aws_api_gateway_method" "proxy_methods" {
   for_each = var.routes
-
   rest_api_id      = aws_api_gateway_rest_api.this.id
   resource_id      = aws_api_gateway_resource.root_resource[each.key].id
   http_method      = upper(each.value.method)
@@ -23,7 +21,6 @@ resource "aws_api_gateway_method" "proxy_methods" {
 
 resource "aws_api_gateway_method_response" "method_response" {
   for_each = var.routes
-
   rest_api_id = aws_api_gateway_rest_api.this.id
   resource_id = aws_api_gateway_resource.root_resource[each.key].id
   http_method = upper(each.value.method)
@@ -41,8 +38,7 @@ resource "aws_api_gateway_method_response" "method_response" {
 }
 
 resource "aws_api_gateway_integration" "proxy_integrations" {
-  for_each = var.routes
-
+  for_each                = var.routes
   rest_api_id             = aws_api_gateway_rest_api.this.id
   resource_id             = aws_api_gateway_resource.root_resource[each.key].id
   http_method             = upper(each.value.method)
@@ -53,7 +49,6 @@ resource "aws_api_gateway_integration" "proxy_integrations" {
 
 resource "aws_api_gateway_integration_response" "integration_response" {
   for_each = var.routes
-
   rest_api_id = aws_api_gateway_rest_api.this.id
   resource_id = aws_api_gateway_resource.root_resource[each.key].id
   http_method = upper(each.value.method)
@@ -64,12 +59,6 @@ resource "aws_api_gateway_integration_response" "integration_response" {
     "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,OPTIONS'",
     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,x-api-key'"
   }
-
-  depends_on = [
-    aws_api_gateway_method.proxy_methods,
-    aws_api_gateway_integration.proxy_integrations,
-    aws_api_gateway_method_response.method_response
-  ]
 }
 
 # --------------------
@@ -80,7 +69,7 @@ locals {
 }
 
 resource "aws_api_gateway_method" "options" {
-  for_each       = local.unique_paths
+  for_each = local.unique_paths
   rest_api_id    = aws_api_gateway_rest_api.this.id
   resource_id    = each.value
   http_method    = "OPTIONS"
@@ -88,15 +77,14 @@ resource "aws_api_gateway_method" "options" {
   api_key_required = false
 
   request_parameters = {
-    "method.request.header.Origin" = false
-    "method.request.header.Access-Control-Request-Method" = false
+    "method.request.header.Origin"                       = false,
+    "method.request.header.Access-Control-Request-Method" = false,
     "method.request.header.Access-Control-Request-Headers" = false
   }
 }
 
 resource "aws_api_gateway_method_response" "options_response" {
   for_each = local.unique_paths
-
   rest_api_id = aws_api_gateway_rest_api.this.id
   resource_id = each.value
   http_method = "OPTIONS"
@@ -115,20 +103,22 @@ resource "aws_api_gateway_method_response" "options_response" {
 
 resource "aws_api_gateway_integration" "options" {
   for_each = local.unique_paths
-
   rest_api_id = aws_api_gateway_rest_api.this.id
   resource_id = each.value
   http_method = "OPTIONS"
   type        = "MOCK"
 
   request_templates = {
-    "application/json" = "{\"statusCode\": 200}"
+    "application/json" = <<EOF
+{
+  "statusCode": 200
+}
+EOF
   }
 }
 
 resource "aws_api_gateway_integration_response" "options" {
   for_each = local.unique_paths
-
   rest_api_id = aws_api_gateway_rest_api.this.id
   resource_id = each.value
   http_method = "OPTIONS"
@@ -139,11 +129,6 @@ resource "aws_api_gateway_integration_response" "options" {
     "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,OPTIONS'",
     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,x-api-key'"
   }
-
-  depends_on = [
-    aws_api_gateway_method.options,
-    aws_api_gateway_method_response.options_response
-  ]
 }
 
 resource "aws_api_gateway_deployment" "this" {
@@ -167,7 +152,6 @@ resource "aws_api_gateway_api_key" "default" {
 
 resource "aws_api_gateway_usage_plan" "default" {
   name = "${var.name}-usage-plan"
-
   api_stages {
     api_id = aws_api_gateway_rest_api.this.id
     stage  = aws_api_gateway_stage.this.stage_name
