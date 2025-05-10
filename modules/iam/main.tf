@@ -1,3 +1,5 @@
+data "aws_caller_identity" "current" {}
+
 data "aws_iam_role" "existing" {
   name  = var.role_name
   count = var.force_create ? 0 : 1
@@ -10,7 +12,7 @@ resource "aws_iam_role" "lambda_exec_role" {
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
-    Statement = [ {
+    Statement = [{
       Effect = "Allow",
       Principal = {
         Service = "lambda.amazonaws.com"
