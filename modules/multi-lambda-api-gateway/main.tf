@@ -127,20 +127,6 @@ EOF
   }
 }
 
-resource "aws_api_gateway_integration_response" "options" {
-  for_each = local.unique_paths
-  rest_api_id = aws_api_gateway_rest_api.this.id
-  resource_id = each.value
-  http_method = "OPTIONS"
-  status_code = "200"
-
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin"  = "'*'",
-    "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,OPTIONS'",
-    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,x-api-key'"
-  }
-}
-
 resource "aws_api_gateway_deployment" "this" {
   depends_on = [
     aws_api_gateway_integration.proxy_integrations,
