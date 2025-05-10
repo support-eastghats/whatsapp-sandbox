@@ -43,6 +43,15 @@ resource "aws_iam_role_policy" "lambda_policy" {
           "s3:*"
         ],
         Resource = "*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "connect:SuspendContactRecording",
+          "connect:ResumeContactRecording",
+          "connect:UpdateContactAttributes"
+        ],
+        Resource = "arn:aws:connect:eu-west-2:${data.aws_caller_identity.current.account_id}:instance/*/contact/*"
       }
     ]
   })
