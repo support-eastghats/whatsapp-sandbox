@@ -75,10 +75,10 @@ module "update_profiles_ccp" {
   }
 }
 
-resource "aws_lambda_permission" "update_profiles_cc_permission" {
-  statement_id  = "AllowAPIGatewayInvokeupdate_profiles_cc"
+resource "aws_lambda_permission" "update_profiles_ccp_permission" {
+  statement_id  = "AllowAPIGatewayInvokeupdate_profiles_ccp"
   action        = "lambda:InvokeFunction"
-  function_name = module.update_profiles_cc.lambda_name
+  function_name = module.update_profiles_ccp.lambda_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${module.api_gateway.execution_arn}/*/*"
 }
