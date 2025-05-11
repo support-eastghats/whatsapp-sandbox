@@ -38,14 +38,23 @@ module "get_profiles_ccp" {
   lambda_zip_path  = "../../lambda-code/getRoutingProfiles.zip"
   lambda_role_arn  = module.iam.lambda_exec_role_arn
   api_gateway_id   = module.api_gateway.api_id
+  api_gateway_execution_arn = module.api_gateway.execution_arn
   env_vars = {
-    STAGE              = "dev"
+    STAGE               = "dev"
     CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id
   }
   tags = {
     Project     = "eastghats-ccp"
     Environment = "dev"
   }
+}
+
+resource "aws_lambda_permission" "get_profiles_ccp_permission" {
+  statement_id  = "AllowAPIGatewayInvokeget_profiles_ccp"
+  action        = "lambda:InvokeFunction"
+  function_name = module.get_profiles_ccp.lambda_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${module.api_gateway.execution_arn}/*/*"
 }
 
 module "update_profiles_ccp" {
@@ -55,14 +64,23 @@ module "update_profiles_ccp" {
   lambda_zip_path  = "../../lambda-code/updateRoutingProfiles.zip"
   lambda_role_arn  = module.iam.lambda_exec_role_arn
   api_gateway_id   = module.api_gateway.api_id
+  api_gateway_execution_arn = module.api_gateway.execution_arn
   env_vars = {
-    STAGE              = "dev"
+    STAGE               = "dev"
     CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id
   }
   tags = {
     Project     = "eastghats-ccp"
     Environment = "dev"
   }
+}
+
+resource "aws_lambda_permission" "update_profiles_cc_permission" {
+  statement_id  = "AllowAPIGatewayInvokeupdate_profiles_cc"
+  action        = "lambda:InvokeFunction"
+  function_name = module.update_profiles_cc.lambda_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${module.api_gateway.execution_arn}/*/*"
 }
 
 module "set_pause_resume_attr" {
@@ -72,8 +90,9 @@ module "set_pause_resume_attr" {
   lambda_zip_path  = "../../lambda-code/setpauseresumeatt-v1.zip"
   lambda_role_arn  = module.iam.lambda_exec_role_arn
   api_gateway_id   = module.api_gateway.api_id
+  api_gateway_execution_arn = module.api_gateway.execution_arn
   env_vars = {
-    STAGE              = "dev"
+    STAGE               = "dev"
     CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id
   }
   tags = {
@@ -82,6 +101,15 @@ module "set_pause_resume_attr" {
   }
 }
 
+resource "aws_lambda_permission" "set_pause_resume_attr_permission" {
+  statement_id  = "AllowAPIGatewayInvokeset_pause_resume_attr"
+  action        = "lambda:InvokeFunction"
+  function_name = module.set_pause_resume_attr.lambda_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${module.api_gateway.execution_arn}/*/*"
+}
+
+
 module "set_pause" {
   source           = "../../modules/lambda"
   function_name    = "setpause"
@@ -89,14 +117,23 @@ module "set_pause" {
   lambda_zip_path  = "../../lambda-code/setpause-v1.zip"
   lambda_role_arn  = module.iam.lambda_exec_role_arn
   api_gateway_id   = module.api_gateway.api_id
+  api_gateway_execution_arn = module.api_gateway.execution_arn
   env_vars = {
-    STAGE              = "dev"
+    STAGE               = "dev"
     CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id
   }
   tags = {
     Project     = "eastghats-ccp"
     Environment = "dev"
   }
+}
+
+resource "aws_lambda_permission" "setpause_permission" {
+  statement_id  = "AllowAPIGatewayInvokeSetPause"
+  action        = "lambda:InvokeFunction"
+  function_name = module.set_pause.lambda_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${module.api_gateway.execution_arn}/*/*"
 }
 
 module "set_resume" {
@@ -106,14 +143,24 @@ module "set_resume" {
   lambda_zip_path  = "../../lambda-code/setresume-v1.zip"
   lambda_role_arn  = module.iam.lambda_exec_role_arn
   api_gateway_id   = module.api_gateway.api_id
+  api_gateway_execution_arn = module.api_gateway.execution_arn
   env_vars = {
-    STAGE              = "dev"
+    STAGE               = "dev"
     CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id
   }
   tags = {
     Project     = "eastghats-ccp"
     Environment = "dev"
   }
+}
+
+
+resource "aws_lambda_permission" "setresume_permission" {
+  statement_id  = "AllowAPIGatewayInvokeSetResume"
+  action        = "lambda:InvokeFunction"
+  function_name = module.set_resume.lambda_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${module.api_gateway.execution_arn}/*/*"
 }
 
 module "api_gateway" {

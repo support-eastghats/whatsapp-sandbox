@@ -21,14 +21,3 @@ resource "aws_cloudwatch_log_group" "log_group" {
   name              = "/aws/lambda/${aws_lambda_function.lambda_func.function_name}"
   retention_in_days = 14
 }
-
-
-resource "aws_lambda_permission" "api_gateway" {
-  statement_id  = "AllowExecutionFromAPIGateway"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.lambda_func.function_name
-  principal     = "apigateway.amazonaws.com"
-
-  # This must match your actual API Gateway ID and region
-  source_arn = "arn:aws:execute-api:${var.region}:${data.aws_caller_identity.current.account_id}:${var.api_gateway_id}/*/*"
-}

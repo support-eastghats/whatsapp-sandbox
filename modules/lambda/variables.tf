@@ -33,3 +33,8 @@ variable "env_vars" {
 variable "tags" {
   type = map(string)
 }
+
+variable "api_gateway_execution_arn" {
+  description = "API Gateway execution ARN for Lambda permissions"
+  type        = string
+}
