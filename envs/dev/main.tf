@@ -31,11 +31,11 @@ module "iam" {
   }
 }
 
-module "get_profiles_ccp" {
+module "get_available_profiles" {
   source           = "../../modules/lambda"
-  function_name    = "getRoutingProfiles"
+  function_name    = "getAvailableRoutingProfiles"
   handler          = "index.handler"
-  lambda_zip_path  = "../../lambda-code/getRoutingProfiles.zip"
+  lambda_zip_path  = "../../lambda-code/getAvailableRoutingProfiles.zip"
   lambda_role_arn  = module.iam.lambda_exec_role_arn
   api_gateway_id   = module.api_gateway.api_id
   api_gateway_execution_arn = module.api_gateway.execution_arn
@@ -49,19 +49,19 @@ module "get_profiles_ccp" {
   }
 }
 
-resource "aws_lambda_permission" "get_profiles_ccp_permission" {
-  statement_id  = "AllowAPIGatewayInvokeget_profiles_ccp"
+resource "aws_lambda_permission" "get_available_profiles_permission" {
+  statement_id  = "AllowAPIGatewayInvokeGetAvailableProfiles"
   action        = "lambda:InvokeFunction"
-  function_name = module.get_profiles_ccp.lambda_name
+  function_name = module.get_available_profiles.lambda_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${module.api_gateway.execution_arn}/*/*"
 }
 
-module "update_profiles_ccp" {
+module "switch_routing_profile" {
   source           = "../../modules/lambda"
-  function_name    = "updateRoutingProfiles"
+  function_name    = "switchRoutingProfile"
   handler          = "index.handler"
-  lambda_zip_path  = "../../lambda-code/updateRoutingProfiles.zip"
+  lambda_zip_path  = "../../lambda-code/switchRoutingProfile.zip"
   lambda_role_arn  = module.iam.lambda_exec_role_arn
   api_gateway_id   = module.api_gateway.api_id
   api_gateway_execution_arn = module.api_gateway.execution_arn
@@ -75,10 +75,10 @@ module "update_profiles_ccp" {
   }
 }
 
-resource "aws_lambda_permission" "update_profiles_ccp_permission" {
-  statement_id  = "AllowAPIGatewayInvokeupdate_profiles_ccp"
+resource "aws_lambda_permission" "switch_routing_profile_permission" {
+  statement_id  = "AllowAPIGatewayInvokeSwitchRoutingProfile"
   action        = "lambda:InvokeFunction"
-  function_name = module.update_profiles_ccp.lambda_name
+  function_name = module.switch_routing_profile.lambda_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${module.api_gateway.execution_arn}/*/*"
 }
@@ -102,13 +102,12 @@ module "set_pause_resume_attr" {
 }
 
 resource "aws_lambda_permission" "set_pause_resume_attr_permission" {
-  statement_id  = "AllowAPIGatewayInvokeset_pause_resume_attr"
+  statement_id  = "AllowAPIGatewayInvokeSetPauseResumeAttr"
   action        = "lambda:InvokeFunction"
   function_name = module.set_pause_resume_attr.lambda_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${module.api_gateway.execution_arn}/*/*"
 }
-
 
 module "set_pause" {
   source           = "../../modules/lambda"
@@ -140,7 +139,7 @@ module "set_resume" {
   source           = "../../modules/lambda"
   function_name    = "setresume"
   handler          = "index.handler"
-  lambda_zip_path  = "../../lambda-code/setresume-v2.zip"
+  lambda_zip_path  = "../../lambda-code/setresume.zip"
   lambda_role_arn  = module.iam.lambda_exec_role_arn
   api_gateway_id   = module.api_gateway.api_id
   api_gateway_execution_arn = module.api_gateway.execution_arn
@@ -153,7 +152,6 @@ module "set_resume" {
     Environment = "dev"
   }
 }
-
 
 resource "aws_lambda_permission" "setresume_permission" {
   statement_id  = "AllowAPIGatewayInvokeSetResume"
@@ -169,11 +167,11 @@ module "api_gateway" {
   stage_name = "dev"
 
   routes = {
-    "getRoutingProfiles"     = { path = "/getRoutingProfiles", method = "POST", lambda_uri = module.get_profiles_ccp.lambda_uri },
-    "updateRoutingProfiles"  = { path = "/updateRoutingProfiles", method = "POST", lambda_uri = module.update_profiles_ccp.lambda_uri },
-    "setpauseresumeattr"     = { path = "/setpauseresumeattr", method = "PUT",  lambda_uri = module.set_pause_resume_attr.lambda_uri },
-    "setpause"               = { path = "/setpause", method = "POST", lambda_uri = module.set_pause.lambda_uri },
-    "setresume"              = { path = "/setresume", method = "POST", lambda_uri = module.set_resume.lambda_uri }
+    "getAvailableRoutingProfiles"     = { path = "/getAvailableRoutingProfiles", method = "POST", lambda_uri = module.get_available_profiles.lambda_uri },
+    "switchRoutingProfile"            = { path = "/switchRoutingProfile", method = "POST", lambda_uri = module.switch_routing_profile.lambda_uri },
+    "setpauseresumeattr"              = { path = "/setpauseresumeattr", method = "PUT",  lambda_uri = module.set_pause_resume_attr.lambda_uri },
+    "setpause"                        = { path = "/setpause", method = "POST", lambda_uri = module.set_pause.lambda_uri },
+    "setresume"                       = { path = "/setresume", method = "POST", lambda_uri = module.set_resume.lambda_uri }
   }
 
   tags = {
@@ -205,5 +203,33 @@ module "amplify_app" {
   tags = {
     Environment = "dev"
     Project     = "custom-ccp"
+  }
+}
+
+module "connect_hierarchy" {
+  source      = "../../modules/connect-hierarchy"
+  instance_id = data.aws_connect_instance.default.id
+
+  projects = {
+    Project1 = {
+      groups = {
+        Support = {
+          roles = ["Level1", "Level2"]
+        }
+        Sales = {
+          roles = ["Level1", "Level2"]
+        }
+      }
+    }
+    Project2 = {
+      groups = {
+        Tech = {
+          roles = ["Level1", "Level2"]
+        }
+        QA = {
+          roles = ["Level1", "Level2"]
+        }
+      }
+    }
   }
 }
