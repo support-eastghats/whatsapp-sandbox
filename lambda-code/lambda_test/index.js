@@ -5,15 +5,19 @@ const connectClient = new ConnectClient({ region: "eu-west-2" });
 export const handler = async (event) => {
   console.log("setpauseresumeattr event:", JSON.stringify(event));
 
+  // Handle CORS preflight
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: corsHeaders(),
+      body: JSON.stringify({ message: 'CORS preflight handled (setpauseresumeattr)' }),
+    };
+  }
+
   const response = {
     statusCode: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Content-Type,x-api-key',
-      'Access-Control-Allow-Methods': 'PUT,OPTIONS',
-      'Content-Type': 'application/json'
-    },
-    body: ''
+    headers: corsHeaders(),
+    body: '',
   };
 
   try {
@@ -24,8 +28,8 @@ export const handler = async (event) => {
       InstanceId: instanceId,
       Attributes: {
         'PAUSE-MISDATA': pauseCtrData,
-        'RESUME-MISDATA': resumeCtrData
-      }
+        'RESUME-MISDATA': resumeCtrData,
+      },
     });
 
     await connectClient.send(command);
@@ -39,3 +43,10 @@ export const handler = async (event) => {
 
   return response;
 };
+
+const corsHeaders = () => ({
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type,x-api-key',
+  'Access-Control-Allow-Methods': 'PUT,OPTIONS',
+  'Content-Type': 'application/json',
+});
