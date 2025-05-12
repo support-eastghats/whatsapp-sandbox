@@ -20,6 +20,19 @@ resource "aws_connect_user_hierarchy_group" "projects" {
   name        = each.key
 }
 
+# ------------------------
+# Delay to allow Project groups to fully register
+# ------------------------
+resource "null_resource" "wait_after_projects" {
+  provisioner "local-exec" {
+    command = "sleep 10"
+  }
+
+  depends_on = [
+    aws_connect_user_hierarchy_group.projects
+  ]
+}
+
 resource "aws_connect_user_hierarchy_group" "groups" {
   for_each = {
     for group_key in flatten([
@@ -37,9 +50,26 @@ resource "aws_connect_user_hierarchy_group" "groups" {
   name              = each.value.name
   parent_group_id   = each.value.parent_id
 
+  lifecycle {
+    create_before_destroy = true
+    ignore_changes = [parent_group_id]
+  }
+
   depends_on = [
-    aws_connect_user_hierarchy_group.projects,
-    aws_connect_user_hierarchy_structure.this
+    null_resource.wait_after_projects
+  ]
+}
+
+# ------------------------
+# Delay to allow Group groups to fully register
+# ------------------------
+resource "null_resource" "wait_after_groups" {
+  provisioner "local-exec" {
+    command = "sleep 10"
+  }
+
+  depends_on = [
+    aws_connect_user_hierarchy_group.groups
   ]
 }
 
@@ -62,8 +92,12 @@ resource "aws_connect_user_hierarchy_group" "roles" {
   name              = each.value.name
   parent_group_id   = each.value.parent_id
 
+  lifecycle {
+    create_before_destroy = true
+    ignore_changes = [parent_group_id]
+  }
+
   depends_on = [
-    aws_connect_user_hierarchy_group.groups,
-    aws_connect_user_hierarchy_structure.this
+    null_resource.wait_after_groups
   ]
 }
