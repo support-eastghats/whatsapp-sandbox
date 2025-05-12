@@ -1,6 +1,6 @@
 variable "instance_id" {
   type        = string
-  description = "Amazon Connect Instance ID"
+  description = "Amazon Connect instance ID"
 }
 
 variable "projects" {
@@ -9,5 +9,4 @@ variable "projects" {
       roles = list(string)
     }))
   }))
-  description = "Map of projects with nested groups and roles"
 }
