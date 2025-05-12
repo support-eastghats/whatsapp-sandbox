@@ -14,6 +14,9 @@ resource "aws_connect_user_hierarchy_structure" "this" {
   }
 }
 
+# ------------------------
+# Level 1: Projects
+# ------------------------
 resource "aws_connect_user_hierarchy_group" "projects" {
   for_each    = var.projects
   instance_id = var.instance_id
@@ -21,11 +24,11 @@ resource "aws_connect_user_hierarchy_group" "projects" {
 }
 
 # ------------------------
-# Delay to allow Project groups to fully register
+# Delay after Projects
 # ------------------------
 resource "null_resource" "wait_after_projects" {
   provisioner "local-exec" {
-    command = "sleep 10"
+    command = "sleep 25"
   }
 
   depends_on = [
@@ -33,6 +36,9 @@ resource "null_resource" "wait_after_projects" {
   ]
 }
 
+# ------------------------
+# Level 2: Groups
+# ------------------------
 resource "aws_connect_user_hierarchy_group" "groups" {
   for_each = {
     for group_key in flatten([
@@ -46,9 +52,9 @@ resource "aws_connect_user_hierarchy_group" "groups" {
     ]) : group_key.key => group_key
   }
 
-  instance_id       = var.instance_id
-  name              = each.value.name
-  parent_group_id   = each.value.parent_id
+  instance_id     = var.instance_id
+  name            = each.value.name
+  parent_group_id = each.value.parent_id
 
   lifecycle {
     create_before_destroy = true
@@ -61,11 +67,11 @@ resource "aws_connect_user_hierarchy_group" "groups" {
 }
 
 # ------------------------
-# Delay to allow Group groups to fully register
+# Delay after Groups
 # ------------------------
 resource "null_resource" "wait_after_groups" {
   provisioner "local-exec" {
-    command = "sleep 10"
+    command = "sleep 25"
   }
 
   depends_on = [
@@ -73,6 +79,9 @@ resource "null_resource" "wait_after_groups" {
   ]
 }
 
+# ------------------------
+# Level 3: Roles
+# ------------------------
 resource "aws_connect_user_hierarchy_group" "roles" {
   for_each = {
     for role_key in flatten([
@@ -88,9 +97,9 @@ resource "aws_connect_user_hierarchy_group" "roles" {
     ]) : role_key.key => role_key
   }
 
-  instance_id       = var.instance_id
-  name              = each.value.name
-  parent_group_id   = each.value.parent_id
+  instance_id     = var.instance_id
+  name            = each.value.name
+  parent_group_id = each.value.parent_id
 
   lifecycle {
     create_before_destroy = true

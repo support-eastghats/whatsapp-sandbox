@@ -9,4 +9,5 @@ variable "projects" {
       roles = list(string)
     }))
   }))
+  description = "Map of projects with nested groups and roles"
 }
