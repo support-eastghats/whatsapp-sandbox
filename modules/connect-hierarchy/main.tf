@@ -36,6 +36,11 @@ resource "aws_connect_user_hierarchy_group" "groups" {
   instance_id       = var.instance_id
   name              = each.value.name
   parent_group_id   = each.value.parent_id
+
+  depends_on = [
+    aws_connect_user_hierarchy_group.projects,
+    aws_connect_user_hierarchy_structure.this
+  ]
 }
 
 resource "aws_connect_user_hierarchy_group" "roles" {
@@ -56,4 +61,9 @@ resource "aws_connect_user_hierarchy_group" "roles" {
   instance_id       = var.instance_id
   name              = each.value.name
   parent_group_id   = each.value.parent_id
+
+  depends_on = [
+    aws_connect_user_hierarchy_group.groups,
+    aws_connect_user_hierarchy_structure.this
+  ]
 }
