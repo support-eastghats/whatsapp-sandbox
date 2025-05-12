@@ -8,7 +8,9 @@ resource "aws_connect_user_hierarchy_structure" "this" {
   }
 }
 
-# --- Projects ---
+# -------------------------
+# Level 1: Projects
+# -------------------------
 resource "aws_connect_user_hierarchy_group" "projects" {
   for_each    = var.projects
   instance_id = var.instance_id
@@ -17,16 +19,18 @@ resource "aws_connect_user_hierarchy_group" "projects" {
   depends_on = [aws_connect_user_hierarchy_structure.this]
 }
 
-# --- Delay after projects ---
-resource "null_resource" "wait_projects" {
+# Artificial delay to allow projects to be fully available
+resource "null_resource" "wait_after_projects" {
   provisioner "local-exec" {
-    command = "sleep 15"
+    command = "sleep 30"
   }
 
   depends_on = [aws_connect_user_hierarchy_group.projects]
 }
 
-# --- Groups ---
+# -------------------------
+# Level 2: Groups
+# -------------------------
 resource "aws_connect_user_hierarchy_group" "groups" {
   for_each = {
     for combo in flatten([
@@ -49,21 +53,21 @@ resource "aws_connect_user_hierarchy_group" "groups" {
     ignore_changes        = [parent_group_id]
   }
 
-  depends_on = [
-    null_resource.wait_projects
-  ]
+  depends_on = [null_resource.wait_after_projects]
 }
 
-# --- Delay after groups ---
-resource "null_resource" "wait_groups" {
+# Artificial delay to allow groups to propagate
+resource "null_resource" "wait_after_groups" {
   provisioner "local-exec" {
-    command = "sleep 15"
+    command = "sleep 30"
   }
 
   depends_on = [aws_connect_user_hierarchy_group.groups]
 }
 
-# --- Roles ---
+# -------------------------
+# Level 3: Roles
+# -------------------------
 resource "aws_connect_user_hierarchy_group" "roles" {
   for_each = {
     for combo in flatten([
@@ -88,7 +92,5 @@ resource "aws_connect_user_hierarchy_group" "roles" {
     ignore_changes        = [parent_group_id]
   }
 
-  depends_on = [
-    null_resource.wait_groups
-  ]
+  depends_on = [null_resource.wait_after_groups]
 }
