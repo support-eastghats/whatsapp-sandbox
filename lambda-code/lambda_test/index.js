@@ -1,56 +1,78 @@
-import { ConnectClient, ResumeContactRecordingCommand } from "@aws-sdk/client-connect";
+// Lambda: getAvailableRoutingProfiles
+import {
+  ConnectClient,
+  ListRoutingProfilesCommand,
+  ListTagsForResourceCommand,
+  DescribeUserCommand,
+  DescribeUserHierarchyGroupCommand,
+} from "@aws-sdk/client-connect";
 
-const connectClient = new ConnectClient({ region: "eu-west-2" });
+const connect = new ConnectClient({ region: "eu-west-2" });
 
 export const handler = async (event) => {
-  console.log("📥 setresume event:", JSON.stringify(event));
-
-  // Handle CORS preflight
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers: corsHeaders(),
-      body: JSON.stringify({ message: 'CORS preflight handled (setresume)' }),
-    };
-  }
+  const { userId, instanceId } = JSON.parse(event.body);
 
   const response = {
     statusCode: 200,
-    headers: corsHeaders(),
-    body: ''
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "Content-Type,x-api-key",
+      "Access-Control-Allow-Methods": "POST,OPTIONS",
+    },
+    body: "",
   };
 
   try {
-    const body = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
-    const { contactId, instanceId } = body;
+    const describeUser = await connect.send(new DescribeUserCommand({
+      InstanceId: instanceId,
+      UserId: userId,
+    }));
 
-    if (!contactId || !instanceId) {
-      throw new Error("Missing contactId or instanceId");
+    const currentProfile = describeUser.User.RoutingProfileId;
+    const hierarchyGroupId = describeUser.User.HierarchyGroupId;
+
+    let project = "", group = "", role = "";
+    if (hierarchyGroupId) {
+      const hierarchy = await connect.send(new DescribeUserHierarchyGroupCommand({
+        InstanceId: instanceId,
+        HierarchyGroupId: hierarchyGroupId,
+      }));
+
+      // Simulate split of name as Project > Group > Role (flat name format)
+      [project, group, role] = hierarchy.HierarchyGroup.Name.split("-");
     }
 
-    const command = new ResumeContactRecordingCommand({
-      ContactId: contactId,
-      InitialContactId: contactId,
-      InstanceId: instanceId
+    const rpCommand = new ListRoutingProfilesCommand({ InstanceId: instanceId });
+    const routingProfiles = await connect.send(rpCommand);
+
+    const filtered = [];
+    for (const profile of routingProfiles.RoutingProfileSummaryList || []) {
+      const tagsResp = await connect.send(new ListTagsForResourceCommand({
+        ResourceArn: profile.Arn,
+      }));
+
+      const tags = tagsResp.Tags || {};
+      const allowAgents = (tags.AllowAgents || "").split(",").map(a => a.trim());
+
+      if (
+        tags.Project === project ||
+        tags.Group === group ||
+        tags.Role === role ||
+        allowAgents.includes(userId)
+      ) {
+        filtered.push({ id: profile.Id, name: profile.Name });
+      }
+    }
+
+    response.body = JSON.stringify({
+      currentProfile,
+      allowedProfiles: filtered,
     });
-
-    const result = await connectClient.send(command);
-    console.log("✅ ResumeContactRecording result:", result);
-
-    response.body = JSON.stringify({ message: 'Recording resumed successfully' });
-
   } catch (err) {
-    console.error("❌ setresume error:", err);
+    console.error("getAvailableRoutingProfiles error:", err);
     response.statusCode = 500;
-    response.body = JSON.stringify({ error: err.message || 'Failed to resume recording' });
+    response.body = JSON.stringify({ error: "Internal server error" });
   }
 
   return response;
 };
-
-const corsHeaders = () => ({
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type,x-api-key',
-  'Access-Control-Allow-Methods': 'POST,OPTIONS',
-  'Content-Type': 'application/json'
-});
