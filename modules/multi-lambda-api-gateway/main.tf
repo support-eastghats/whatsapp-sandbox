@@ -20,7 +20,10 @@ resource "aws_api_gateway_method" "proxy_methods" {
 }
 
 resource "aws_api_gateway_method_response" "method_response" {
-  for_each = var.routes
+  for_each = {
+    for k, v in var.routes : k => v if upper(v.method) == "OPTIONS"
+  }
+
   rest_api_id = aws_api_gateway_rest_api.this.id
   resource_id = aws_api_gateway_resource.root_resource[each.key].id
   http_method = upper(each.value.method)
@@ -36,6 +39,7 @@ resource "aws_api_gateway_method_response" "method_response" {
     "method.response.header.Access-Control-Allow-Headers" = true
   }
 }
+
 
 resource "aws_api_gateway_integration" "proxy_integrations" {
   for_each                = var.routes
