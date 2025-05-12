@@ -47,25 +47,25 @@ resource "aws_api_gateway_integration" "proxy_integrations" {
   uri                     = each.value.lambda_uri
 }
 
-resource "aws_api_gateway_integration_response" "integration_response" {
-  for_each = var.routes
-  rest_api_id = aws_api_gateway_rest_api.this.id
-  resource_id = aws_api_gateway_resource.root_resource[each.key].id
-  http_method = upper(each.value.method)
-  status_code = "200"
+# resource "aws_api_gateway_integration_response" "integration_response" {
+#   for_each = var.routes
+#   rest_api_id = aws_api_gateway_rest_api.this.id
+#   resource_id = aws_api_gateway_resource.root_resource[each.key].id
+#   http_method = upper(each.value.method)
+#   status_code = "200"
 
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
-    "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,OPTIONS'"
-    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,x-api-key'"
-  }
+#   response_parameters = {
+#     "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+#     "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,OPTIONS'"
+#     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,x-api-key'"
+#   }
 
-  depends_on = [
-    aws_api_gateway_method.proxy_methods,
-    aws_api_gateway_method_response.method_response,
-    aws_api_gateway_integration.proxy_integrations
-  ]
-}
+#   depends_on = [
+#     aws_api_gateway_method.proxy_methods,
+#     aws_api_gateway_method_response.method_response,
+#     aws_api_gateway_integration.proxy_integrations
+#   ]
+# }
 
 
 # --------------------
