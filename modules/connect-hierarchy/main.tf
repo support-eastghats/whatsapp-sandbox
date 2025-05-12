@@ -58,11 +58,14 @@ resource "aws_connect_user_hierarchy_group" "groups" {
 
   lifecycle {
     create_before_destroy = true
-    ignore_changes = [parent_group_id]
+    ignore_changes        = [parent_group_id]
   }
 
+  # Enforce wait after project groups
   depends_on = [
-    null_resource.wait_after_projects
+    aws_connect_user_hierarchy_group.projects,
+    null_resource.wait_after_projects,
+    aws_connect_user_hierarchy_structure.this
   ]
 }
 
