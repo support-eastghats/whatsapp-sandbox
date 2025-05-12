@@ -1,3 +1,5 @@
+# modules/multi-lambda-api-gateway/main.tf
+
 resource "aws_api_gateway_rest_api" "this" {
   name        = var.name
   description = "Managed by Terraform"
@@ -10,11 +12,16 @@ resource "aws_api_gateway_resource" "root_resource" {
   path_part   = trim(each.value.path, "/")
 }
 
-# Proxy methods: POST, PUT etc.
-resource "aws_api_gateway_method" "proxy_methods" {
-  for_each = {
+locals {
+  proxy_routes = {
     for k, v in var.routes : k => v if upper(v.method) != "OPTIONS"
   }
+
+  unique_paths = tomap({ for k, v in var.routes : trim(v.path, "/") => aws_api_gateway_resource.root_resource[k].id })
+}
+
+resource "aws_api_gateway_method" "proxy_methods" {
+  for_each = local.proxy_routes
 
   rest_api_id      = aws_api_gateway_rest_api.this.id
   resource_id      = aws_api_gateway_resource.root_resource[each.key].id
@@ -24,7 +31,7 @@ resource "aws_api_gateway_method" "proxy_methods" {
 }
 
 resource "aws_api_gateway_integration" "proxy_integrations" {
-  for_each = aws_api_gateway_method.proxy_methods
+  for_each = local.proxy_routes
 
   rest_api_id             = aws_api_gateway_rest_api.this.id
   resource_id             = aws_api_gateway_resource.root_resource[each.key].id
@@ -32,11 +39,6 @@ resource "aws_api_gateway_integration" "proxy_integrations" {
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = each.value.lambda_uri
-}
-
-# CORS OPTIONS support (MOCK)
-locals {
-  unique_paths = tomap({ for k, v in var.routes : trim(v.path, "/") => aws_api_gateway_resource.root_resource[k].id })
 }
 
 resource "aws_api_gateway_method" "options" {
