@@ -39,7 +39,12 @@ resource "aws_api_gateway_integration" "proxy_integrations" {
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = each.value.lambda_uri
+
+  depends_on = [
+    aws_api_gateway_method.proxy_methods
+  ]
 }
+
 
 resource "aws_api_gateway_method" "options" {
   for_each = local.unique_paths
