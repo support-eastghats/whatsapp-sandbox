@@ -10,8 +10,12 @@ resource "aws_api_gateway_resource" "root_resource" {
   path_part   = trim(each.value.path, "/")
 }
 
+# Proxy methods: POST, PUT etc.
 resource "aws_api_gateway_method" "proxy_methods" {
-  for_each = var.routes
+  for_each = {
+    for k, v in var.routes : k => v if upper(v.method) != "OPTIONS"
+  }
+
   rest_api_id      = aws_api_gateway_rest_api.this.id
   resource_id      = aws_api_gateway_resource.root_resource[each.key].id
   http_method      = upper(each.value.method)
@@ -19,30 +23,9 @@ resource "aws_api_gateway_method" "proxy_methods" {
   api_key_required = true
 }
 
-resource "aws_api_gateway_method_response" "method_response" {
-  for_each = {
-    for k, v in var.routes : k => v if upper(v.method) == "OPTIONS"
-  }
-
-  rest_api_id = aws_api_gateway_rest_api.this.id
-  resource_id = aws_api_gateway_resource.root_resource[each.key].id
-  http_method = upper(each.value.method)
-  status_code = "200"
-
-  response_models = {
-    "application/json" = "Empty"
-  }
-
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin"  = true,
-    "method.response.header.Access-Control-Allow-Methods" = true,
-    "method.response.header.Access-Control-Allow-Headers" = true
-  }
-}
-
-
 resource "aws_api_gateway_integration" "proxy_integrations" {
-  for_each                = var.routes
+  for_each = aws_api_gateway_method.proxy_methods
+
   rest_api_id             = aws_api_gateway_rest_api.this.id
   resource_id             = aws_api_gateway_resource.root_resource[each.key].id
   http_method             = upper(each.value.method)
@@ -51,36 +34,14 @@ resource "aws_api_gateway_integration" "proxy_integrations" {
   uri                     = each.value.lambda_uri
 }
 
-# resource "aws_api_gateway_integration_response" "integration_response" {
-#   for_each = var.routes
-#   rest_api_id = aws_api_gateway_rest_api.this.id
-#   resource_id = aws_api_gateway_resource.root_resource[each.key].id
-#   http_method = upper(each.value.method)
-#   status_code = "200"
-
-#   response_parameters = {
-#     "method.response.header.Access-Control-Allow-Origin"  = "'*'"
-#     "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,OPTIONS'"
-#     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,x-api-key'"
-#   }
-
-#   depends_on = [
-#     aws_api_gateway_method.proxy_methods,
-#     aws_api_gateway_method_response.method_response,
-#     aws_api_gateway_integration.proxy_integrations
-#   ]
-# }
-
-
-# --------------------
-# CORS SUPPORT (OPTIONS)
-# --------------------
+# CORS OPTIONS support (MOCK)
 locals {
   unique_paths = tomap({ for k, v in var.routes : trim(v.path, "/") => aws_api_gateway_resource.root_resource[k].id })
 }
 
 resource "aws_api_gateway_method" "options" {
   for_each = local.unique_paths
+
   rest_api_id    = aws_api_gateway_rest_api.this.id
   resource_id    = each.value
   http_method    = "OPTIONS"
@@ -88,34 +49,17 @@ resource "aws_api_gateway_method" "options" {
   api_key_required = false
 
   request_parameters = {
-    "method.request.header.Origin"                       = false,
+    "method.request.header.Origin"                         = false,
     "method.request.header.Access-Control-Request-Method" = false,
     "method.request.header.Access-Control-Request-Headers" = false
   }
 }
 
-resource "aws_api_gateway_method_response" "options_response" {
-  for_each = local.unique_paths
-  rest_api_id = aws_api_gateway_rest_api.this.id
-  resource_id = each.value
-  http_method = "OPTIONS"
-  status_code = "200"
-
-  response_models = {
-    "application/json" = "Empty"
-  }
-
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin"  = true,
-    "method.response.header.Access-Control-Allow-Methods" = true,
-    "method.response.header.Access-Control-Allow-Headers" = true
-  }
-}
-
 resource "aws_api_gateway_integration" "options" {
-  for_each = local.unique_paths
+  for_each = aws_api_gateway_method.options
+
   rest_api_id = aws_api_gateway_rest_api.this.id
-  resource_id = each.value
+  resource_id = aws_api_gateway_resource.root_resource[each.key].id
   http_method = "OPTIONS"
   type        = "MOCK"
 
@@ -128,16 +72,36 @@ EOF
   }
 }
 
-resource "aws_api_gateway_integration_response" "options" {
-  for_each = local.unique_paths
+resource "aws_api_gateway_method_response" "options_response" {
+  for_each = aws_api_gateway_method.options
+
   rest_api_id = aws_api_gateway_rest_api.this.id
-  resource_id = each.value
+  resource_id = aws_api_gateway_resource.root_resource[each.key].id
+  http_method = "OPTIONS"
+  status_code = "200"
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = true,
+    "method.response.header.Access-Control-Allow-Methods" = true,
+    "method.response.header.Access-Control-Allow-Headers" = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "options" {
+  for_each = aws_api_gateway_method.options
+
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  resource_id = aws_api_gateway_resource.root_resource[each.key].id
   http_method = "OPTIONS"
   status_code = "200"
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
-    "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'",
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,OPTIONS'",
     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,x-api-key'"
   }
 
@@ -147,7 +111,6 @@ resource "aws_api_gateway_integration_response" "options" {
     aws_api_gateway_integration.options
   ]
 }
-
 
 resource "aws_api_gateway_deployment" "this" {
   depends_on = [
