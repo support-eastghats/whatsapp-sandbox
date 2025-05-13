@@ -35,7 +35,7 @@ module "get_available_profiles" {
   source           = "../../modules/lambda"
   function_name    = "getAvailableRoutingProfiles"
   handler          = "index.handler"
-  lambda_zip_path  = "../../lambda-code/getAvailableRoutingProfiles.zip"
+  lambda_zip_path  = "../../lambda-code/getAvailableRoutingProfiles-v1.zip"
   lambda_role_arn  = module.iam.lambda_exec_role_arn
   api_gateway_id   = module.api_gateway.api_id
   api_gateway_execution_arn = module.api_gateway.execution_arn
@@ -61,7 +61,7 @@ module "switch_routing_profile" {
   source           = "../../modules/lambda"
   function_name    = "switchRoutingProfile"
   handler          = "index.handler"
-  lambda_zip_path  = "../../lambda-code/switchRoutingProfile.zip"
+  lambda_zip_path  = "../../lambda-code/switchRoutingProfile-v1.zip"
   lambda_role_arn  = module.iam.lambda_exec_role_arn
   api_gateway_id   = module.api_gateway.api_id
   api_gateway_execution_arn = module.api_gateway.execution_arn
