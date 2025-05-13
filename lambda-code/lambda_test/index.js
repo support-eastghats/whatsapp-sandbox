@@ -1,82 +1,40 @@
-import { useState } from "react";
-import axios from "axios";
-import "./SwitchRouteProfileSection.css";
+import {
+  ConnectClient,
+  UpdateUserRoutingProfileCommand
+} from "@aws-sdk/client-connect";
 
-export default function SwitchRouteProfileSection({ agent, apiKey, availableProfiles, onClose }) {
-  const [selectedProfileId, setSelectedProfileId] = useState("");
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
+const connect = new ConnectClient({ region: "eu-west-2" });
 
-  const instanceId = process.env.REACT_APP_CONNECT_INSTANCE_ID;
-  const apiBase = process.env.REACT_APP_DISPURL;
+export const handler = async (event) => {
+  console.log("[switchRoutingProfile] Event:", JSON.stringify(event));
 
-  const handleSwitch = async () => {
-    if (!selectedProfileId) return;
-    setLoading(true);
-    setMessage("⏳ Switching...");
-
-    try {
-      const fullArn = agent?.getAgentARN?.();
-      const userId = fullArn?.split("/").pop();
-
-      if (!userId) {
-        setMessage("❌ Unable to get Agent ID.");
-        setLoading(false);
-        return;
-      }
-
-      const payload = {
-        userId,
-        instanceId,
-        routingProfileId: selectedProfileId
-      };
-
-      await axios.post(`${apiBase}/switchRoutingProfile`, payload, {
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": apiKey
-        }
-      });
-
-      setMessage("✅ Routing profile switched successfully.");
-    } catch (err) {
-      console.error("Switch failed:", err);
-      setMessage("❌ Failed to switch routing profile.");
-    } finally {
-      setLoading(false);
-    }
+  const { userId, instanceId, routingProfileId } = JSON.parse(event.body || '{}');
+  const response = {
+    statusCode: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "Content-Type,x-api-key",
+      "Access-Control-Allow-Methods": "POST,OPTIONS",
+      "Content-Type": "application/json"
+    },
+    body: ""
   };
 
-  return (
-    <div className="switch-form">
-      <select
-        className="switch-dropdown"
-        value={selectedProfileId}
-        onChange={(e) => setSelectedProfileId(e.target.value)}
-        disabled={loading}
-      >
-        <option value="">-- Select Routing Profile --</option>
-        {availableProfiles.map((profile) => (
-          <option key={profile.id} value={profile.id}>
-            {profile.name}
-          </option>
-        ))}
-      </select>
+  try {
+    await connect.send(
+      new UpdateUserRoutingProfileCommand({
+        InstanceId: instanceId,
+        UserId: userId,
+        RoutingProfileId: routingProfileId
+      })
+    );
 
-      <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
-        <button
-          className="switch-submit"
-          onClick={handleSwitch}
-          disabled={!selectedProfileId || loading}
-        >
-          {loading ? "Switching..." : "Change"}
-        </button>
-        <button className="switch-toggle" onClick={onClose} disabled={loading}>
-          Cancel
-        </button>
-      </div>
+    response.body = JSON.stringify({ message: "Routing profile switched successfully." });
+  } catch (err) {
+    console.error("switchRoutingProfile error:", err);
+    response.statusCode = 500;
+    response.body = JSON.stringify({ error: "Failed to switch routing profile" });
+  }
 
-      {message && <p className="switch-message">{message}</p>}
-    </div>
-  );
-}
+  return response;
+};
