@@ -1,4 +1,3 @@
-
 data "aws_caller_identity" "current" {}
 
 resource "aws_lambda_function" "lambda_func" {
@@ -6,9 +5,10 @@ resource "aws_lambda_function" "lambda_func" {
   filename         = var.lambda_zip_path
   handler          = var.handler
   runtime          = "nodejs18.x"
-  source_code_hash = filebase64sha256(var.lambda_zip_path)
   role             = var.lambda_role_arn
   timeout          = 60
+  source_code_hash = filebase64sha256(var.lambda_zip_path)
+  layers           = [var.lambda_layer_arn]
 
   environment {
     variables = var.env_vars

@@ -34,6 +34,12 @@ variable "tags" {
   type = map(string)
 }
 
+variable "lambda_layer_arn" {
+  type        = string
+  description = "ARN of the shared Lambda layer"
+}
+
+
 variable "api_gateway_execution_arn" {
   description = "API Gateway execution ARN for Lambda permissions"
   type        = string

@@ -1,12 +1,12 @@
 # envs/dev/main.tf
 
 provider "aws" {
-  region = "eu-west-2"
+  region = "ap-south-1"
 }
 
-data "aws_connect_instance" "default" {
-  instance_alias = "eastghats-dev"
-}
+# data "aws_connect_instance" "default" {
+#   instance_alias = "eastghats-dev"
+# }
 
 locals {
   amplify_app_id  = "d1b8m7s8f6rgmd"
@@ -20,189 +20,158 @@ variable "github_token" {
   default     = ""
 }
 
+# Archive packaging for Lambdas
+data "archive_file" "register_number_zip" {
+  type        = "zip"
+  source_dir  = "${path.module}/../../lambda-code/registerNumber"
+  output_path = "${path.module}/../../lambda-code/registerNumber.zip"
+}
+
+data "archive_file" "send_message_zip" {
+  type        = "zip"
+  source_dir  = "${path.module}/../../lambda-code/sendMessage"
+  output_path = "${path.module}/../../lambda-code/sendMessage.zip"
+}
+
+data "archive_file" "receive_webhook_zip" {
+  type        = "zip"
+  source_dir  = "${path.module}/../../lambda-code/receiveWebhook"
+  output_path = "${path.module}/../../lambda-code/receiveWebhook.zip"
+}
+
 module "iam" {
   source       = "../../modules/iam"
-  role_name    = "eastghats-ccp-lambda-role-dev"
+  role_name    = "eastghats-whatsapp-lambda-role-dev"
   force_create = true
 
   tags = {
-    Project     = "eastghats-ccp"
-    Environment = "dev"
+    Project     = "eastghats-whatsapp"
+    Environment = "sandbox"
   }
 }
 
-module "get_available_profiles" {
-  source           = "../../modules/lambda"
-  function_name    = "getAvailableRoutingProfiles"
-  handler          = "index.handler"
-  lambda_zip_path  = "../../lambda-code/getAvailableRoutingProfiles.zip"
-  lambda_role_arn  = module.iam.lambda_exec_role_arn
-  api_gateway_id   = module.api_gateway.api_id
+module "shared_layer" {
+  source = "../../modules/lambda-layer"
+}
+
+module "register_Number" {
+  source               = "../../modules/lambda"
+  function_name        = "whatsapp-registerNumber"
+  handler              = "index.handler"
+  lambda_zip_path      = data.archive_file.register_number_zip.output_path
+  lambda_role_arn      = module.iam.lambda_exec_role_arn
+  lambda_layer_arn     = module.shared_layer.layer_arn
+  api_gateway_id       = module.api_gateway.api_id
   api_gateway_execution_arn = module.api_gateway.execution_arn
   env_vars = {
-    STAGE               = "dev"
-    CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id
+    STAGE = "dev"
   }
   tags = {
-    Project     = "eastghats-ccp"
-    Environment = "dev"
+    Project     = "eastghats-whatsapp"
+    Environment = "sandbox"
   }
+  depends_on = [data.archive_file.register_number_zip]
 }
 
-resource "aws_lambda_permission" "get_available_profiles_permission" {
+resource "aws_lambda_permission" "register_Number_permission" {
   statement_id  = "AllowAPIGatewayInvokeGetAvailableProfiles"
   action        = "lambda:InvokeFunction"
-  function_name = module.get_available_profiles.lambda_name
+  function_name = module.register_Number.lambda_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${module.api_gateway.execution_arn}/*/*"
 }
 
-module "switch_routing_profile" {
-  source           = "../../modules/lambda"
-  function_name    = "switchRoutingProfile"
-  handler          = "index.handler"
-  lambda_zip_path  = "../../lambda-code/switchRoutingProfile.zip"
-  lambda_role_arn  = module.iam.lambda_exec_role_arn
-  api_gateway_id   = module.api_gateway.api_id
+module "send_Message" {
+  source               = "../../modules/lambda"
+  function_name        = "whatsapp-send-message"
+  handler              = "index.handler"
+  lambda_zip_path      = data.archive_file.send_message_zip.output_path
+  lambda_role_arn      = module.iam.lambda_exec_role_arn
+  lambda_layer_arn     = module.shared_layer.layer_arn
+  api_gateway_id       = module.api_gateway.api_id
   api_gateway_execution_arn = module.api_gateway.execution_arn
   env_vars = {
-    STAGE               = "dev"
-    CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id
+    STAGE = "dev"
   }
   tags = {
-    Project     = "eastghats-ccp"
-    Environment = "dev"
+    Project     = "eastghats-whatsapp"
+    Environment = "sandbox"
   }
+  depends_on = [data.archive_file.send_message_zip]
 }
 
-resource "aws_lambda_permission" "switch_routing_profile_permission" {
+resource "aws_lambda_permission" "send_Message_permission" {
   statement_id  = "AllowAPIGatewayInvokeSwitchRoutingProfile"
   action        = "lambda:InvokeFunction"
-  function_name = module.switch_routing_profile.lambda_name
+  function_name = module.send_Message.lambda_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${module.api_gateway.execution_arn}/*/*"
 }
 
-module "set_pause_resume_attr" {
-  source           = "../../modules/lambda"
-  function_name    = "setpauseresumeattr"
-  handler          = "index.handler"
-  lambda_zip_path  = "../../lambda-code/setpauseresumeatt.zip"
-  lambda_role_arn  = module.iam.lambda_exec_role_arn
-  api_gateway_id   = module.api_gateway.api_id
+module "receive_Webhook" {
+  source               = "../../modules/lambda"
+  function_name        = "whatsapp-receiveWebhook"
+  handler              = "index.handler"
+  lambda_zip_path      = data.archive_file.receive_webhook_zip.output_path
+  lambda_role_arn      = module.iam.lambda_exec_role_arn
+  lambda_layer_arn     = module.shared_layer.layer_arn
+  api_gateway_id       = module.api_gateway.api_id
   api_gateway_execution_arn = module.api_gateway.execution_arn
   env_vars = {
-    STAGE               = "dev"
-    CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id
+    STAGE = "dev"
   }
   tags = {
-    Project     = "eastghats-ccp"
-    Environment = "dev"
+    Project     = "eastghats-whatsapp"
+    Environment = "sandbox"
   }
+  depends_on = [data.archive_file.receive_webhook_zip]
 }
 
-resource "aws_lambda_permission" "set_pause_resume_attr_permission" {
+resource "aws_lambda_permission" "receive_Webhook_permission" {
   statement_id  = "AllowAPIGatewayInvokeSetPauseResumeAttr"
   action        = "lambda:InvokeFunction"
-  function_name = module.set_pause_resume_attr.lambda_name
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${module.api_gateway.execution_arn}/*/*"
-}
-
-module "set_pause" {
-  source           = "../../modules/lambda"
-  function_name    = "setpause"
-  handler          = "index.handler"
-  lambda_zip_path  = "../../lambda-code/setpause.zip"
-  lambda_role_arn  = module.iam.lambda_exec_role_arn
-  api_gateway_id   = module.api_gateway.api_id
-  api_gateway_execution_arn = module.api_gateway.execution_arn
-  env_vars = {
-    STAGE               = "dev"
-    CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id
-  }
-  tags = {
-    Project     = "eastghats-ccp"
-    Environment = "dev"
-  }
-}
-
-resource "aws_lambda_permission" "setpause_permission" {
-  statement_id  = "AllowAPIGatewayInvokeSetPause"
-  action        = "lambda:InvokeFunction"
-  function_name = module.set_pause.lambda_name
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${module.api_gateway.execution_arn}/*/*"
-}
-
-module "set_resume" {
-  source           = "../../modules/lambda"
-  function_name    = "setresume"
-  handler          = "index.handler"
-  lambda_zip_path  = "../../lambda-code/setresume.zip"
-  lambda_role_arn  = module.iam.lambda_exec_role_arn
-  api_gateway_id   = module.api_gateway.api_id
-  api_gateway_execution_arn = module.api_gateway.execution_arn
-  env_vars = {
-    STAGE               = "dev"
-    CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id
-  }
-  tags = {
-    Project     = "eastghats-ccp"
-    Environment = "dev"
-  }
-}
-
-resource "aws_lambda_permission" "setresume_permission" {
-  statement_id  = "AllowAPIGatewayInvokeSetResume"
-  action        = "lambda:InvokeFunction"
-  function_name = module.set_resume.lambda_name
+  function_name = module.receive_Webhook.lambda_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${module.api_gateway.execution_arn}/*/*"
 }
 
 module "api_gateway" {
   source     = "../../modules/multi-lambda-api-gateway"
-  name       = "eastghats-ccp-api-dev"
+  name       = "eastghats-whatsapp-api-dev"
   stage_name = "dev"
 
   routes = {
-    "getAvailableRoutingProfiles"     = { path = "/getAvailableRoutingProfiles", method = "POST", lambda_uri = module.get_available_profiles.lambda_uri },
-    "switchRoutingProfile"            = { path = "/switchRoutingProfile", method = "POST", lambda_uri = module.switch_routing_profile.lambda_uri },
-    "setpauseresumeattr"              = { path = "/setpauseresumeattr", method = "PUT",  lambda_uri = module.set_pause_resume_attr.lambda_uri },
-    "setpause"                        = { path = "/setpause", method = "POST", lambda_uri = module.set_pause.lambda_uri },
-    "setresume"                       = { path = "/setresume", method = "POST", lambda_uri = module.set_resume.lambda_uri }
+    "registerNumber"  = { path = "/registerNumber", method = "POST", lambda_uri = module.register_Number.lambda_uri },
+    "sendMessage"      = { path = "/sendMessage", method = "POST", lambda_uri = module.send_Message.lambda_uri },
+    "receiveWebhook"   = { path = "/receiveWebhook", method = "PUT",  lambda_uri = module.receive_Webhook.lambda_uri }
   }
 
   tags = {
-    Project     = "eastghats-ccp"
-    Environment = "dev"
+    Project     = "eastghats-whatsapp"
+    Environment = "sandbox"
   }
 }
 
 module "amplify_app" {
   source        = "../../modules/amplify"
-  app_name      = "customccp-ui"
-  repo_url      = "https://github.com/support-eastghats/customccp-ui"
+  app_name      = "whatsapp-sandbox-ui"
+  repo_url      = "https://github.com/support-eastghats/whatsapp-sandbox"
   github_token  = var.github_token
-  branch_name   = "main"
+  branch_name   = "dev"
   stage         = "PRODUCTION"
 
   environment_variables = {
-    REACT_APP_ENV                 = "development"
-    REACT_APP_DISPURL             = module.api_gateway.rest_api_url
-    REACT_APP_APIKEY              = module.api_gateway.api_key_value
-    REACT_APP_CONNECT_INSTANCE_ID = data.aws_connect_instance.default.id
-    REACT_APP_CCPURL              = local.connect_ccp_url
-    REACT_APP_REGION              = "eu-west-2"
-    REACT_APP_LOGINURL            = "https://accounts.google.com/o/saml2/initsso?idpid=C00j5cpqj&spid=332463133108&forceauthn=false&authuser=0"
+    REACT_APP_ENV       = "development"
+    REACT_APP_API_URL   = module.api_gateway.rest_api_url
+    REACT_APP_APIKEY    = module.api_gateway.api_key_value
+    REACT_APP_REGION    = "ap-south-1"
+    REACT_APP_STAGE     = "dev"
   }
 
   build_spec = file("${path.module}/buildspec.yml")
 
   tags = {
-    Environment = "dev"
-    Project     = "custom-ccp"
+    Environment = "sandbox"
+    Project     = "custom-whatsapp"
   }
 }
-
