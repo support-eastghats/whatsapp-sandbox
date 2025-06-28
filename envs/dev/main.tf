@@ -4,11 +4,6 @@ provider "aws" {
   region = "ap-south-1"
 }
 
-provider "aws" {
-  alias  = "eu"
-  region = "eu-north-1"
-}
-
 locals {
   amplify_app_id  = "d1b8m7s8f6rgmd"
 }
