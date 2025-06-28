@@ -7,7 +7,7 @@ resource "aws_lambda_function" "lambda_func" {
   runtime          = "nodejs18.x"
   role             = var.lambda_role_arn
   timeout          = 60
-  source_code_hash = filebase64sha256(var.lambda_zip_path)
+  source_code_hash = filebase64sha256("${path.module}/shared-lambda-layer.zip")
   layers           = [var.lambda_layer_arn]
 
   environment {

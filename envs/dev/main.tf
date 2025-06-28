@@ -4,13 +4,8 @@ provider "aws" {
   region = "ap-south-1"
 }
 
-# data "aws_connect_instance" "default" {
-#   instance_alias = "eastghats-dev"
-# }
-
 locals {
   amplify_app_id  = "d1b8m7s8f6rgmd"
-  connect_ccp_url = "https://${data.aws_connect_instance.default.instance_alias}.my.connect.aws/ccp-v2/"
 }
 
 variable "github_token" {
